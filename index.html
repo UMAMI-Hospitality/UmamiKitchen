@@ -1177,6 +1177,14 @@ table.adm input,table.adm select{padding:8px 10px;font-size:13.5px}
   </div>
 
   <div class="panel">
+    <h3>Device setup link</h3>
+    <div class="ps">Send this to a phone and it connects itself &mdash; no URL, no token, nothing to type.
+    Treat it like a password: it carries the connection details, so send it directly to the person,
+    not into a group anyone can read.</div>
+    <div id="setuplink"></div>
+  </div>
+
+  <div class="panel">
     <h3>Outlets</h3>
     <div class="ps">Add a kitchen and it becomes available to assign people to. Removing one is blocked while anyone is still assigned to it.</div>
     <div class="tagrow" id="adm-outlets"></div>
@@ -1200,7 +1208,24 @@ function loadCfg(){
   try{ const v=localStorage.getItem("umami_cfg"); if(v) return JSON.parse(v); }catch(e){}
   return window.KITCHEN_CONFIG || {};
 }
-const CFG       = loadCfg();
+/* A setup link carries the connection details so a chef never types them.
+   Used once, saved to the device, then wiped from the address bar so the
+   token is not left sitting in history or a bookmark. */
+function consumeSetupLink(){
+  try{
+    const m=/[?&]setup=([^&]+)/.exec(location.search);
+    if(!m) return null;
+    let b=m[1].replace(/-/g,"+").replace(/_/g,"/");
+    while(b.length%4) b+="=";
+    const o=JSON.parse(decodeURIComponent(escape(atob(b))));
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(o.u||"")) return null;
+    const cfg={API_URL:o.u, API_TOKEN:o.t||""};
+    try{ localStorage.setItem("umami_cfg",JSON.stringify(cfg)); }catch(e){}
+    try{ history.replaceState({}, "", location.pathname); }catch(e){}
+    return cfg;
+  }catch(e){ return null; }
+}
+const CFG       = consumeSetupLink() || loadCfg();
 const API_URL   = CFG.API_URL   || "";
 const API_TOKEN = CFG.API_TOKEN || "";   /* supplied per device, or by config.js */
 
@@ -2550,6 +2575,24 @@ function renderActions(){
 }
 
 /* ---------- admin ---------- */
+function setupLink(){
+  const u=API_URL, t=API_TOKEN;
+  if(!u) return null;
+  const raw=JSON.stringify({u,t});
+  let b;
+  try{ b=btoa(unescape(encodeURIComponent(raw))); }catch(e){ return null; }
+  b=b.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  return location.origin+location.pathname+"?setup="+b;
+}
+function renderSetupLink(){
+  const box=$("setuplink"); if(!box) return;
+  const l=setupLink();
+  if(!l){ box.innerHTML=`<div class="hint">This device is not connected to a sheet, so there is nothing to share yet.</div>`; return; }
+  box.innerHTML=`<textarea class="exp" style="height:80px" onclick="this.select()" readonly>${esc(l)}</textarea>
+    <div class="hint">Tapping it saves the connection on that phone, then clears it from the address bar.
+    The chef lands straight on the sign-in list and picks their own name.</div>`;
+}
+
 function renderAdmin(){
   $("adm-users").innerHTML=S.users.map(u=>{
     return `<tr>
@@ -2575,6 +2618,7 @@ function renderAdmin(){
   $("nu-signs").innerHTML=`<option value="">—</option>`+
     SIGNERS.map(([k,l])=>`<option value="${k}">${l}</option>`).join("");
   newUserRole();
+  renderSetupLink();
   $("adm-outlets").innerHTML=S.outlets.map(o=>{
     const n=S.users.filter(u=>u.venue===o).length;
     return `<span class="tag">${o}<span style="color:var(--mute);font-weight:400">${n} assigned</span>
