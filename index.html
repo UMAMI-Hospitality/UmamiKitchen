@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Umami — Char &amp; Barten Kitchen Log</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1C1B19">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kitchen Log">
+<style>
+:root{
+  --ink:#1C1B19; --ember:#D8552F; --brass:#C8A24B; --green:#3D6B55;
+  --red:#B23A2E; --paper:#F4F1EC; --slate:#3A3631; --mute:#8C857A; --line:#E3DDD3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+
+/* ---------- chrome ---------- */
+.topbar{background:var(--ink);color:#fff;padding:0 24px;display:flex;align-items:center;gap:26px;
+  flex-wrap:wrap;position:sticky;top:0;z-index:50;min-height:58px}
+.lockup{display:flex;flex-direction:column;justify-content:center;padding-right:6px}
+.brand{font-family:Georgia,serif;font-size:16px;letter-spacing:.30em;text-transform:uppercase;color:var(--brass);line-height:1.1}
+.parent{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#6f6a62;margin-top:3px;font-weight:600}
+.parent .deg{color:var(--ember)}
+.nav{display:flex;gap:2px;align-self:stretch}
+.nav button{border:0;background:transparent;color:#a8a196;padding:0 16px;font-size:13px;cursor:pointer;
+  font-weight:600;letter-spacing:.02em;font-family:inherit;border-bottom:3px solid transparent}
+.nav button:hover{color:#fff}
+.nav button.on{color:#fff;border-bottom-color:var(--ember)}
+.me{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:#9c968c}
+.me b{color:var(--brass);font-weight:700}
+.me a{color:#9c968c;text-decoration:underline;cursor:pointer}
+.sync{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#9c968c;
+  padding-left:16px;margin-left:4px;border-left:1px solid #33302b}
+.sdot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.wrap{max-width:1180px;margin:0 auto;padding:30px 24px 70px}
+.view{display:none}.view.on{display:block}
+
+/* ---------- type ---------- */
+.eyebrow{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mute);font-weight:700;margin-bottom:8px}
+h1.pg{font-family:Georgia,serif;font-size:31px;font-weight:400;margin-bottom:10px}
+.lead{color:var(--slate);font-size:14.5px;line-height:1.62;max-width:740px}
+
+/* ---------- sign in ---------- */
+.signwrap{max-width:430px;margin:56px auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:30px}
+.siglock{text-align:center;padding-bottom:20px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+.sig-u{font-family:Georgia,serif;font-size:26px;letter-spacing:.34em;text-transform:uppercase;color:var(--ink);text-indent:.34em}
+.sig-t{font-family:Georgia,serif;font-style:italic;font-size:13px;color:var(--red);margin-top:7px;
+  display:inline-block;border-top:1px solid var(--red);padding-top:7px}
+.signwrap h2{font-family:Georgia,serif;font-size:23px;font-weight:400;margin-bottom:4px}
+.signwrap .s{font-size:13px;color:var(--mute);margin-bottom:22px}
+.grouplab{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mute);font-weight:700;
+  margin:22px 0 9px;display:flex;align-items:center;gap:10px}
+.grouplab:after{content:"";flex:1;height:1px;background:var(--line)}
+.ucard{display:flex;align-items:center;gap:12px;width:100%;border:1.5px solid var(--line);background:#fff;
+  border-radius:11px;padding:13px 14px;margin-bottom:11px;cursor:pointer;text-align:left;font-family:inherit}
+.ucard:hover{border-color:var(--mute)}
+.ucard.on{border-color:var(--ember);background:#fdf3ef}
+.uav{width:38px;height:38px;border-radius:50%;background:var(--ink);color:var(--brass);flex:0 0 38px;
+  display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:14px}
+.ucard.on .uav{background:var(--ember);color:#fff}
+.un{font-size:14.5px;font-weight:700;color:var(--ink);display:block}
+.ur{font-size:11.5px;color:var(--mute);margin-top:2px;display:block}
+
+/* ---------- forms ---------- */
+input,textarea,select{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:11px 12px;
+  font-size:15px;font-family:inherit;color:var(--ink);background:#fff}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--ember)}
+textarea{resize:none;height:62px;font-size:14px}
+.sub{font-size:10.5px;color:var(--mute);font-weight:600;letter-spacing:.05em;margin-bottom:4px;display:block}
+.hint{font-size:11px;color:var(--mute);margin-top:5px;line-height:1.45}
+.hint b{color:var(--red)}
+.row2{display:flex;gap:9px}.row2>*{flex:1}
+.row3{display:flex;gap:7px}.row3>*{flex:1;min-width:0}
+.row3 input{padding:11px 8px;text-align:center}
+.btn{background:var(--ember);color:#fff;border:0;border-radius:10px;padding:13px 20px;font-size:14px;
+  font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em}
+.btn:hover{background:#c44a26}
+.btn.ghost{background:#fff;color:var(--slate);border:1.5px solid var(--line)}
+.btn.ghost:hover{background:var(--paper);color:var(--ink)}
+.btn.dark{background:var(--ink)}.btn.dark:hover{background:#000}
+.btn.sm{padding:8px 13px;font-size:12.5px;border-radius:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.submit{width:100%;padding:15px;font-size:15.5px;border-radius:11px}
+
+/* ---------- phone ---------- */
+.stage{display:flex;gap:44px;align-items:flex-start;flex-wrap:wrap}
+/* Plain page, not a phone mock-up — this runs on a real phone. */
+.phone{flex:1 1 480px;max-width:560px;min-width:0}
+.screen{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ph-head{background:var(--ink);color:#fff;padding:16px 22px 14px}
+.ph-head .t{font-family:Georgia,serif;font-size:15px;color:var(--brass);letter-spacing:.1em;text-transform:uppercase}
+.ph-head .d{font-size:11.5px;color:#9c968c;margin-top:3px}
+.ph-body{padding:22px 22px 26px}
+.fgroup{margin-bottom:19px}
+.flabel{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--mute);font-weight:700;margin-bottom:7px}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:#fff;color:var(--slate);padding:9px 14px;border-radius:9px;
+  font-size:13.5px;cursor:pointer;font-weight:600}
+.chip:hover{border-color:var(--mute)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip.ok.on{background:var(--green);border-color:var(--green)}
+.chip.bad.on{background:var(--red);border-color:var(--red)}
+.divider{height:1px;background:var(--line);margin:20px 0 18px}
+.stamp{text-align:center;font-size:11px;color:var(--mute);margin-top:11px}
+.editing-banner{background:#fdf3ef;border-left:4px solid var(--ember);padding:10px 12px;border-radius:0 8px 8px 0;
+  font-size:12px;color:var(--slate);margin-bottom:16px;line-height:1.5}
+
+/* ---------- add-lists ---------- */
+.addbtn{width:100%;margin-top:9px;background:#fff;border:1.5px dashed var(--mute);color:var(--slate);
+  border-radius:9px;padding:11px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.addbtn:hover{border-color:var(--ember);color:var(--ember)}
+.addbtn.editing{border-style:solid;border-color:var(--ember);background:var(--ember);color:#fff}
+.wline{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--line);
+  border-radius:8px;margin-top:7px;background:#fff}
+.wline.sel{border-color:var(--ember);background:#fdf3ef}
+.wl-main{flex:1;min-width:0}
+.wl-t{font-size:13px;font-weight:700;color:var(--ink)}
+.wl-s{font-size:11px;color:var(--mute);margin-top:1px}
+.wl-v{font-size:12px;font-weight:700;color:var(--slate);white-space:nowrap}
+.wl-b{border:0;background:transparent;cursor:pointer;font-size:14px;padding:3px 5px;color:var(--mute);line-height:1}
+.wl-b:hover{color:var(--ember)}
+.wtot{display:flex;justify-content:space-between;margin-top:10px;padding-top:9px;border-top:1.5px solid var(--line);
+  font-size:12.5px;font-weight:800}
+.wempty{font-size:11.5px;color:var(--mute);margin-top:9px;line-height:1.5;font-style:italic}
+.covernote{background:var(--paper);border-left:3px solid var(--brass);border-radius:0 7px 7px 0;padding:8px 11px;
+  margin-top:8px;font-size:11px;color:var(--slate);line-height:1.5}
+.covernote b{color:var(--ink)}
+textarea.exp{width:100%;height:132px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;
+  background:var(--paper);border:1.5px solid var(--line);cursor:pointer;white-space:pre;overflow:auto}
+textarea.exp:hover{border-color:var(--ember)}
+.bar{width:5px;border-radius:3px;flex:0 0 5px;height:34px}
+
+/* ---------- reports ---------- */
+.rpt{background:#fff;border:1px solid var(--line);border-radius:11px;padding:16px 18px;margin-bottom:11px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.rpt-d{font-family:Georgia,serif;font-size:18px;min-width:190px}
+.rpt-m{font-size:12px;color:var(--mute);margin-top:3px}
+.rpt-sp{flex:1}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:10px;font-weight:800;
+  letter-spacing:.09em;text-transform:uppercase;color:#fff}
+.detail{background:#fff;border:1px solid var(--line);border-radius:11px;margin:-4px 0 14px;padding:20px 22px}
+.dsec{border-top:1px solid var(--line);padding-top:13px;margin-top:13px}
+.dsec:first-child{border-top:0;padding-top:0;margin-top:0}
+.dsec h4{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin-bottom:8px}
+.dgrid{display:flex;gap:30px;flex-wrap:wrap}
+.dg{font-size:14px}
+.dg b{display:block;font-size:19px;font-family:Georgia,serif;font-weight:400;margin-top:2px}
+.dl{font-size:13.2px;color:var(--slate);padding:5px 0;line-height:1.5}
+.dl b{color:var(--ink)}
+.vrow{border-left:3px solid var(--brass);padding:2px 0 2px 12px;margin-bottom:11px}
+.vmeta{font-size:12px;color:var(--mute);margin-bottom:4px}
+.vmeta b{color:var(--slate)}
+.vtag{background:var(--brass);color:#fff;font-size:9px;font-weight:800;letter-spacing:.09em;
+  text-transform:uppercase;padding:2px 7px;border-radius:999px;margin-left:7px}
+.vchg{font-size:13.2px;color:var(--ink);padding:2px 0;font-variant-numeric:tabular-nums}
+.empty{background:#fff;border:1px dashed var(--line);border-radius:11px;padding:36px;text-align:center;
+  color:var(--mute);font-size:13.5px;line-height:1.6}
+
+/* ---------- dashboard ---------- */
+.dash-head{border-bottom:2px solid var(--ink);padding-bottom:15px;margin-bottom:24px;display:flex;
+  align-items:flex-end;gap:18px;flex-wrap:wrap}
+.dash-head .when{margin-left:auto;font-size:12px;color:var(--mute);text-align:right;line-height:1.65}
+.band{margin-bottom:26px}
+.band-h{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+.dot{width:9px;height:9px;border-radius:50%}
+.band-t{font-size:11.5px;letter-spacing:.19em;text-transform:uppercase;font-weight:800}
+.band-n{font-size:11.5px;color:var(--mute);margin-left:auto}
+.kpis{background:#fff;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.kpi{display:flex;align-items:center;gap:16px;padding:13px 17px;border-bottom:1px solid var(--line)}
+.kpi:last-child{border-bottom:0}
+.kname{flex:1;min-width:150px;font-size:14px;font-weight:600}
+.kname small{display:block;font-weight:400;color:var(--mute);font-size:11.5px;margin-top:2px}
+.kval{flex:0 0 120px;text-align:right;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.kval small{display:block;font-size:10.5px;color:var(--mute);font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;margin-bottom:2px}
+.kgrey{color:var(--mute);font-weight:500;font-size:13px;font-style:italic}
+.read{background:var(--ink);color:#e8e3da;border-radius:10px;padding:20px 24px;margin:30px 0 34px;
+  font-size:14.5px;line-height:1.7}
+.read b{color:var(--brass);font-weight:700}
+table.ap{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+table.ap th{background:var(--ink);color:#fff;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;
+  padding:12px 13px;text-align:left;font-weight:700}
+table.ap td{padding:12px 13px;font-size:13.2px;border-bottom:1px solid var(--line);color:var(--slate);
+  line-height:1.5;vertical-align:top}
+table.ap tr:last-child td{border-bottom:0}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:800;
+  letter-spacing:.09em;text-transform:uppercase;color:#fff;white-space:nowrap}
+.foot{margin-top:26px;font-size:12px;color:var(--mute);line-height:1.65;border-top:1px solid var(--line);padding-top:15px}
+
+
+/* ================= MONTHLY CLOSE =================
+   The scorecard KPIs, their weights and targets, exactly as the Excel
+   defines them. Scoring below reproduces the workbook's own tiers so the
+   two always agree. */
+const TARGETS={
+  Char:  {rating:4.5, actualFC:27.4, wastePct:1.5, ticket:12, critVac:0, critFind:0, stockVar:1.5, trainPct:100},
+  Barten:{rating:4.5, actualFC:27.5, wastePct:1.5, ticket:12, critVac:0, critFind:0, stockVar:1.5, trainPct:100}
+};
+const KPIS=[
+ {area:"Food Quality",f:"rating",   kpi:"Guest food rating / feedback",          wt:15,dir:"Higher",unit:"rating"},
+ {area:"Cost",        f:"actualFC", kpi:"Actual vs theoretical food cost",       wt:25,dir:"Lower", unit:"%"},
+ {area:"Waste",       f:"wastePct", kpi:"Waste value as % of purchases",         wt:10,dir:"Lower", unit:"%"},
+ {area:"Operations",  f:"ticket",   kpi:"Average ticket time",                   wt:8, dir:"Lower", unit:"min"},
+ {area:"People",      f:"critVac",  kpi:"Critical kitchen vacancies",            wt:10,dir:"Lower", unit:"count"},
+ {area:"Compliance",  f:"critFind", kpi:"Critical HACCP / hygiene findings",     wt:15,dir:"Lower", unit:"count"},
+ {area:"Inventory",   f:"stockVar", kpi:"Stock variance (absolute)",             wt:8, dir:"Lower", unit:"%"},
+ {area:"Training",    f:"trainPct", kpi:"Mandatory / skills training completion",wt:9, dir:"Higher",unit:"%"}
+];
+const ADV=[
+ {area:"Equipment",f:"eqFail",   kpi:"Critical equipment downtime",              unit:"count"},
+ {area:"Suppliers",f:"supIssues",kpi:"Major supplier quality / availability",    unit:"count"}
+];
+/* the Excel's own tiers — do not "improve" these or the two stop agreeing */
+function achv(area,unit,dir,F,G){
+  if(area==="Cost")      return G<=F?1.2:(G-F<=2?0.9:(G-F<=4?0.7:0.4));
+  if(area==="Inventory") return G<=F?1.2:(G-F<=0.5?0.9:(G-F<=1.5?0.7:0.4));
+  if(unit==="count")     return G===0?1.2:(G===1?0.9:(G===2?0.6:0.3));
+  if(dir==="Higher")     return F? Math.min(G/F,1.2):0;
+  return G===0?1.2:Math.min(F/G,1.2);
+}
+const bandOf=x=>x>=105?"Exceptional":x>=95?"Excellent":x>=85?"Strong":x>=75?"Acceptable":"Needs Improvement";
+const ragOf =a=>a>=1?["GREEN",C.green]:a>=0.85?["AMBER",C.brass]:["RED",C.red];
+
+/* what the department figures are, grouped by who owes them */
+const MFIELDS=[
+ ["Finance / Cost Control",[
+   ["theoFC","Theoretical food cost","%"],
+   ["actualFC","Actual food cost","%"],
+   ["purchases","Total food purchases","EGP"],
+   ["wasteValue","Waste value","EGP"],
+   ["stockVar","Stock variance, absolute","%"]]],
+ ["Human Resources",[
+   ["establishment","Approved establishment","count"],
+   ["headcount","Actual headcount, month end","count"],
+   ["critVac","Critical vacancies","count"],
+   ["leavers","Leavers","count"],
+   ["turnover","Turnover","%"],
+   ["trainPct","Training completion","%"]]],
+ ["Operations",[
+   ["ticket","Average ticket time","min"]]],
+ ["QA / Food Safety",[
+   ["auditScore","Audit score","%"],
+   ["critFind","Critical findings","count"],
+   ["majFind","Major findings","count"],
+   ["carsOpen","Corrective actions open at month end","count"],
+   ["carsClosed","Corrective actions closed in month","count"],
+   ["unresolvedBreach","Unresolved critical breach — 1 = yes, 0 = no","0/1"]]],
+ ["Marketing / Guest Relations",[
+   ["rating","Food-only guest rating","/5"],
+   ["ratingN","Number of ratings","count"]]],
+ ["Advisory — Maintenance & Purchasing",[
+   ["eqFail","Critical equipment failures","count"],
+   ["eqHours","Equipment downtime","hours"],
+   ["supIssues","Supplier quality / availability issues","count"]]]
+];
+
+const mKey=()=>`${S.mVenue}|${$("m-month").value}`;
+
+/* everything the daily logs already know about that month */
+function fromLogs(){
+  const mk=$("m-month").value;
+  const rs=S.reports.filter(r=>r.venue===S.mVenue && r.dateKey.slice(0,7)===mk);
+  if(!rs.length) return null;
+  let kg=0,covers=0,rev=0,tick=[],rate=[],e86=0,temps=0,absSum=0,absN=0,dev=0,checks=0,eqh=0,sup=0;
+  rs.forEach(r=>{const d=r.d;
+    (d.lines||[]).forEach(l=>kg+=l.kg);
+    covers+=d.covers||0; rev+=d.rev||0;
+    if(d.ticket!=="" && d.ticket!=null) tick.push(+d.ticket);
+    (d.fbs||[]).forEach(o=>{ if(FB[o.type]) rate.push(FB[o.type].n); });
+    e86+=(d.e86||[]).length;
+    if(d.temps==="fail") temps++;
+    if(d.brig && d.brig.r){ absSum+=d.brig.a/d.brig.r; absN++; }
+    if(d.recipe){ checks++; if(d.recipe==="fail") dev++; }
+    (d.isss||[]).forEach(o=>{ eqh+=o.hrs||0; if(o.kind==="supplier") sup++; });
+  });
+  const avg=a=>a.length? a.reduce((x,y)=>x+y,0)/a.length : null;
+  return {n:rs.length, kg, covers, rev,
+    ticket:avg(tick), rating:avg(rate), e86, temps, dev, checks,
+    absence:absN? absSum/absN*100 : null, eqHours:eqh, supIssues:sup};
+}
+
+function initMonth(){
+  if(!$("m-month").value){
+    const d=new Date(); d.setMonth(d.getMonth()-1);       /* default to last month */
+    $("m-month").value=d.toISOString().slice(0,7);
+  }
+  if(!S.mVenue) S.mVenue=S.outlets[0];
+  $("m-venue").innerHTML=S.outlets.map(o=>
+    `<div class="chip ${S.mVenue===o?'on':''}" onclick="S.mVenue='${o}';initMonth()">${o}</div>`).join("");
+  loadMonth();
+}
+
+function loadMonth(){
+  const m=S.monthly[mKey()]||{}, L=fromLogs();
+  let h="";
+  MFIELDS.forEach(([group,fields])=>{
+    h+=`<div class="panel" style="padding:18px 20px;margin-bottom:14px">
+        <h3 style="font-size:17px;margin-bottom:12px">${group}</h3>
+        <table class="adm" style="margin:0"><thead><tr>
+          <th style="width:44%">Figure</th><th style="width:10%">Unit</th>
+          <th style="width:20%">Enter</th><th style="width:26%">Your logs say</th></tr></thead><tbody>`;
+    fields.forEach(([f,label,unit])=>{
+      let cmp="—";
+      if(L){
+        if(f==="ticket"   && L.ticket!=null) cmp=L.ticket.toFixed(1)+" min average";
+        if(f==="rating"   && L.rating!=null) cmp=L.rating.toFixed(1)+" / 5 from "+L.n+" log"+(L.n>1?"s":"");
+        if(f==="wasteValue")                 cmp=L.kg.toFixed(1)+" kg logged";
+        if(f==="eqHours")                    cmp=L.eqHours?L.eqHours+" h logged":"none logged";
+        if(f==="supIssues")                  cmp=L.supIssues+" logged";
+        if(f==="critFind" && L.temps)        cmp=L.temps+" temperature excursion"+(L.temps>1?"s":"");
+        if(f==="critVac"  && L.absence!=null)cmp="absence "+L.absence.toFixed(0)+"%";
+      }
+      h+=`<tr><td><b>${label}</b></td><td>${unit}</td>
+        <td><input type="number" step="0.01" id="mf-${f}" value="${m[f]!=null?m[f]:""}"
+             placeholder="0" oninput="scoreMonth()" style="background:#FFF3C4"></td>
+        <td><span class="hint" style="margin:0">${cmp}</span></td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  });
+  $("m-form").innerHTML=h;
+  $("m-saved").textContent = S.monthly[mKey()] ? "Saved" : "Not yet saved";
+  scoreMonth();
+}
+
+function readMonth(){
+  const o={};
+  MFIELDS.forEach(([,fs])=>fs.forEach(([f])=>{
+    const el=$("mf-"+f); if(el && el.value!=="") o[f]=+el.value;
+  }));
+  /* waste % is derived, never typed twice */
+  if(o.wasteValue!=null && o.purchases) o.wastePct=+(o.wasteValue/o.purchases*100).toFixed(2);
+  return o;
+}
+
+function scoreMonth(){
+  const m=readMonth(), T=TARGETS[S.mVenue]||TARGETS.Char;
+  let total=0, missing=0;
+  let h=`<table class="ap"><thead><tr>
+    <th style="width:26%">KPI</th><th style="width:7%">Weight</th><th style="width:10%">Target</th>
+    <th style="width:10%">Actual</th><th style="width:12%">Achievement</th>
+    <th style="width:12%">Weighted</th><th style="width:11%">Status</th></tr></thead><tbody>`;
+  KPIS.forEach(k=>{
+    const F=T[k.f], G=m[k.f];
+    if(G==null){
+      missing++;
+      h+=`<tr><td><b>${k.kpi}</b></td><td>${k.wt}%</td><td>${F}</td>
+        <td colspan="3"><span class="kgrey">not yet provided</span></td>
+        <td><span class="pill" style="background:${C.mute}">WAITING</span></td></tr>`;
+      return;
+    }
+    const a=achv(k.area,k.unit,k.dir,F,G), sc=a*k.wt, [lab,col]=ragOf(a);
+    total+=sc;
+    h+=`<tr><td><b>${k.kpi}</b></td><td>${k.wt}%</td><td>${F}</td><td><b>${G}</b></td>
+      <td>${(a*100).toFixed(1)}%</td><td>${sc.toFixed(2)}</td>
+      <td><span class="pill" style="background:${col}">${lab}</span></td></tr>`;
+  });
+  h+=`</tbody></table>`;
+
+  h+=`<div class="read" style="margin:22px 0 10px">`;
+  if(missing){
+    h+=`<b>${missing} of ${KPIS.length} KPIs still waiting on a department.</b> `+
+       `The score below counts only what has been provided, so treat it as incomplete until every line is filled. `+
+       `Running total <b>${total.toFixed(1)}</b> of ${KPIS.reduce((a,k)=>a+k.wt,0)-KPIS.filter(k=>m[k.f]==null).reduce((a,k)=>a+k.wt,0)} available points.`;
+  }else{
+    h+=`<b>Overall direct score ${total.toFixed(2)} — ${bandOf(total)}.</b> `+
+       `Every KPI provided and scored on the same tiers as the workbook.`;
+  }
+  h+=`</div>`;
+
+  /* advisory: shown, never scored */
+  h+=`<div class="eyebrow" style="margin-top:26px">Advisory — tracked, not scored</div><table class="ap"><tbody>`;
+  ADV.forEach(k=>{
+    const G=m[k.f];
+    h+=`<tr><td style="width:52%"><b>${k.kpi}</b></td><td>target 0</td>
+      <td>${G==null?'<span class="kgrey">not provided</span>':'<b>'+G+'</b>'}</td>
+      <td>${G==null?"":'<span class="pill" style="background:'+(G>0?C.brass:C.green)+'">'+(G>0?"ATTENTION":"CLEAR")+'</span>'}</td></tr>`;
+  });
+  h+=`</tbody></table>`;
+  $("m-score").innerHTML=h;
+  renderExport();
+}
+
+/* Scorecard cell map. Rows 11-18 are the scored KPIs, 32-33 advisory. */
+const CELLS={rating:"G11",actualFC:"G12",wastePct:"G13",ticket:"G14",
+             critVac:"G15",critFind:"G16",stockVar:"G17",trainPct:"G18",
+             eqFail:"G32",supIssues:"G33"};
+
+function renderExport(){
+  const m=readMonth(), L=fromLogs(), box=$("m-export");
+  const direct=KPIS.map(k=>({f:k.f,label:k.kpi,cell:CELLS[k.f],v:m[k.f]}));
+  const adv=ADV.map(k=>({f:k.f,label:k.kpi,cell:CELLS[k.f],v:m[k.f]}));
+  const miss=direct.filter(x=>x.v==null).length;
+
+  let h=`<div class="panel" style="padding:20px 22px">
+    <h3 style="font-size:17px">${S.mVenue} Kitchen &middot; ${$("m-month").value}</h3>
+    <div class="ps">Open the <b>${S.mVenue} Kitchen</b> sheet in the scorecard workbook and paste into <b>G11</b>.</div>`;
+
+  h+=`<table class="adm" style="margin-bottom:14px"><thead><tr>
+      <th style="width:8%">Cell</th><th style="width:52%">KPI</th><th style="width:20%">Value</th></tr></thead><tbody>`;
+  direct.forEach(x=>{
+    h+=`<tr><td><b>${x.cell}</b></td><td>${x.label}</td>
+        <td>${x.v==null?'<span class="kgrey">waiting</span>':'<b>'+x.v+'</b>'}</td></tr>`;
+  });
+  h+=`</tbody></table>`;
+
+  if(miss){
+    h+=`<div class="hint"><b>${miss} figure${miss>1?"s":""} still missing.</b> Pasting now would leave gaps in the sheet. The box below uses a blank for anything not yet provided, so existing cells are not overwritten with zeros.</div>`;
+  }
+  h+=`<span class="sub">Direct KPIs &mdash; paste into G11</span>
+      <textarea class="exp" onclick="this.select()" readonly>${
+        direct.map(x=>x.v==null?"":x.v).join("\n")}</textarea>`;
+  h+=`<span class="sub" style="margin-top:12px">Advisory &mdash; paste into G32</span>
+      <textarea class="exp" style="height:52px" onclick="this.select()" readonly>${
+        adv.map(x=>x.v==null?"":x.v).join("\n")}</textarea>`;
+
+  /* the full picture, for the record and for cross-checking */
+  const rows=[["Venue",S.mVenue],["Month",$("m-month").value]];
+  MFIELDS.forEach(([g,fs])=>fs.forEach(([f,label,unit])=>
+    rows.push([label+(unit?" ("+unit+")":""), m[f]!=null?m[f]:"NOT PROVIDED"])));
+  if(L){
+    rows.push(["— from your daily logs —",""]);
+    rows.push(["Reports filed",L.n]);
+    rows.push(["Waste logged (kg)",L.kg.toFixed(1)]);
+    rows.push(["Covers",L.covers]);
+    rows.push(["Food revenue logged (EGP)",L.rev.toFixed(2)]);
+    rows.push(["Ticket time, log average (min)",L.ticket!=null?L.ticket.toFixed(1):"not measured"]);
+    rows.push(["Guest rating, log average (/5)",L.rating!=null?L.rating.toFixed(2):"none logged"]);
+    rows.push(["Items 86'd",L.e86]);
+    rows.push(["Temperature excursions",L.temps]);
+    rows.push(["Recipe checks done",L.checks]);
+    rows.push(["Recipe deviations",L.dev]);
+    rows.push(["Unplanned absence (%)",L.absence!=null?L.absence.toFixed(1):"not logged"]);
+    rows.push(["Equipment downtime (h)",L.eqHours]);
+  }
+  h+=`<span class="sub" style="margin-top:12px">Full month record &mdash; department figures and what your logs showed</span>
+      <textarea class="exp" style="height:150px" onclick="this.select()" readonly>${
+        rows.map(r=>r.join("\t")).join("\n")}</textarea>
+      <div class="hint">Tab separated. Paste into a blank sheet and it lands in two columns.</div>`;
+  h+=`</div>`;
+  box.innerHTML=h;
+}
+
+function saveMonth(){
+  S.monthly[mKey()]=readMonth();
+  push({action:"month",key:mKey(),venue:S.mVenue,month:$("m-month").value,data:S.monthly[mKey()]});
+  $("m-saved").textContent="Saved";
+  scoreMonth();
+}
+
+
+/* ================= SCORECARD, GATES, SIGN-OFF ================= */
+const SIGNERS=[["radwan","Reviewed by (Radwan)"],["fareed","Reviewed by (Fareed)"],["owner","Final approval (Owner)"]];
+const SSTATE=["Pending","Approved","Queried"];
+const BONUS=[[105,1.2,"Exceptional"],[95,1.0,"Excellent"],[85,0.75,"Strong"],[75,0.5,"Acceptable"],[0,0,"Needs Improvement"]];
+const multOf=x=>{for(const[t,m]of BONUS) if(x>=t) return m; return 0};
+
+/* score one venue for one month from whatever has been entered */
+function scoreVenue(venue,month){
+  const m=S.monthly[`${venue}|${month}`];
+  if(!m) return {none:true,total:0,missing:KPIS.length,rows:[]};
+  const T=TARGETS[venue]||TARGETS.Char;
+  let total=0,missing=0;
+  const rows=KPIS.map(k=>{
+    const F=T[k.f],G=m[k.f];
+    if(G==null){missing++;return{k,F,G:null}}
+    const a=achv(k.area,k.unit,k.dir,F,G); total+=a*k.wt;
+    return {k,F,G,a,sc:a*k.wt,rag:ragOf(a)};
+  });
+  return {total,missing,rows,data:m,none:false};
+}
+const sKey=()=>$("s-month").value;
+function sign(venue){ const k=`${venue}|${sKey()}`;
+  if(!S.signoff[k]) S.signoff[k]={radwan:"Pending",fareed:"Pending",owner:"Pending",gate3:"PASS"};
+  return S.signoff[k]; }
+function setSign(venue,who,val){ sign(venue)[who]=val;
+  push({action:"signoff",key:`${venue}|${sKey()}`,venue,month:sKey(),data:sign(venue)});
+  renderScore(); }
+
+function initScore(){
+  if(!$("s-month").value) $("s-month").value = $("m-month").value ||
+    (()=>{const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7)})();
+  renderScore();
+}
+
+function renderScore(){
+  const month=sKey(), vs=S.outlets.slice(0,2);
+  const R={}; vs.forEach(v=>R[v]=scoreVenue(v,month));
+  const weight=100/vs.length;
+  const anyData=vs.some(v=>!R[v].none);
+  let combined=0; vs.forEach(v=>combined+=R[v].total*weight/100);
+
+  let h="";
+
+  /* ---- headline ---- */
+  h+=`<div class="read" style="margin-top:0">`;
+  if(!anyData){
+    h+=`<b>Nothing closed for ${month} yet.</b> Enter the department figures under Monthly close and the scorecard builds itself from there.`;
+  }else{
+    const miss=vs.reduce((a,v)=>a+R[v].missing,0);
+    h+=`<b>Combined Umami score ${combined.toFixed(2)} — ${bandOf(combined)}.</b> `;
+    h+=vs.map(v=>`${v} ${R[v].total.toFixed(1)}`).join(" · ")+`, weighted ${weight}/${weight}. `;
+    h+= miss? `<b>${miss} KPI${miss>1?"s":""} still outstanding</b>, so this is provisional.`
+            : `All KPIs provided.`;
+  }
+  h+=`</div>`;
+
+  /* ---- per venue ---- */
+  h+=`<div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:8px">`;
+  vs.forEach(v=>{
+    const r=R[v];
+    const reds=r.rows.filter(x=>x.rag&&x.rag[0]==="RED").length;
+    const ambers=r.rows.filter(x=>x.rag&&x.rag[0]==="AMBER").length;
+    const greens=r.rows.filter(x=>x.rag&&x.rag[0]==="GREEN").length;
+    h+=`<div class="panel" style="flex:1 1 320px;padding:18px 20px">
+      <h3 style="font-size:19px;margin-bottom:2px">${v} Kitchen</h3>
+      <div class="ps" style="margin-bottom:14px">${r.none?"Not closed":`Direct score <b>${r.total.toFixed(2)}</b> — ${bandOf(r.total)}`}</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <span class="pill" style="background:${C.red}">${reds} red</span>
+        <span class="pill" style="background:${C.brass}">${ambers} amber</span>
+        <span class="pill" style="background:${C.green}">${greens} green</span>
+        ${r.missing?`<span class="pill" style="background:${C.mute}">${r.missing} waiting</span>`:""}
+      </div>`;
+    SIGNERS.forEach(([key,label])=>{
+      const cur=sign(v)[key];
+      const col=cur==="Approved"?C.green:cur==="Queried"?C.red:C.mute;
+      h+=`<div style="display:flex;align-items:center;gap:9px;margin-bottom:7px">
+        <span style="flex:1;font-size:13px">${label}</span>
+        <select onchange="setSign('${v}','${key}',this.value)" style="width:120px;padding:6px 8px;font-size:12.5px">
+          ${SSTATE.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}
+        </select>
+        <span class="sdot" style="background:${col};width:10px;height:10px;border-radius:50%"></span></div>`;
+    });
+    h+=`<div style="display:flex;align-items:center;gap:9px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+      <span style="flex:1;font-size:13px">Evidence complete, no manipulation</span>
+      <select onchange="sign('${v}').gate3=this.value;renderScore()" style="width:120px;padding:6px 8px;font-size:12.5px">
+        <option ${sign(v).gate3==="PASS"?"selected":""}>PASS</option>
+        <option ${sign(v).gate3==="FAIL"?"selected":""}>FAIL</option></select></div>`;
+    h+=`<div class="hint" style="margin-top:8px">Prepared by Chef Irfan Malek</div></div>`;
+  });
+  h+=`</div>`;
+
+  /* ---- bonus gates ---- */
+  const breach = vs.some(v=>R[v].data && +R[v].data.unresolvedBreach>0);
+  const costRed= vs.some(v=>{const row=R[v].rows.find(x=>x.k.f==="actualFC");return row&&row.rag&&row.rag[0]==="RED"});
+  const evid   = vs.every(v=>sign(v).gate3==="PASS");
+  const signed = vs.every(v=>SIGNERS.every(([k])=>sign(v)[k]==="Approved"));
+  const queried= vs.some(v=>SIGNERS.some(([k])=>sign(v)[k]==="Queried"));
+  const gates=[
+    ["Gate 1","No unresolved critical food-safety breach", !breach,
+      breach?"A breach is recorded in the QA figures":"Nothing recorded"],
+    ["Gate 2","Food cost not RED at either outlet", !costRed,
+      costRed?"Food cost is RED — see the venue panels":"Within tolerance"],
+    ["Gate 3","Evidence complete, no reporting manipulation", evid,
+      evid?"Confirmed on both sheets":"Marked FAIL on a venue"],
+    ["Gate 4","Sign-off complete, nothing queried", signed&&!queried,
+      queried?"A reviewer has queried a line":(signed?"All three approved":"Awaiting approvals")]
+  ];
+  const allPass=gates.every(g=>g[2]);
+  h+=`<div class="eyebrow" style="margin-top:22px">Bonus gates</div>
+      <h1 class="pg" style="font-size:24px;margin-bottom:12px">All four must pass</h1>
+      <table class="ap"><tbody>`;
+  gates.forEach(([n,label,pass,why])=>{
+    h+=`<tr><td style="width:9%"><b>${n}</b></td><td style="width:46%">${label}</td>
+      <td style="width:30%"><span class="hint" style="margin:0">${why}</span></td>
+      <td><span class="pill" style="background:${pass?C.green:C.red}">${pass?"PASS":"FAIL"}</span></td></tr>`;
+  });
+  h+=`<tr style="background:var(--paper)"><td><b>Overall</b></td><td><b>Bonus eligibility</b></td><td></td>
+      <td><span class="pill" style="background:${allPass?C.green:C.red}">${allPass?"PASS":"FAIL"}</span></td></tr>`;
+  h+=`</tbody></table>`;
+
+  /* ---- quarter ---- */
+  const months=[]; const d=new Date(month+"-01");
+  for(let i=2;i>=0;i--){const x=new Date(d); x.setMonth(x.getMonth()-i); months.push(x.toISOString().slice(0,7));}
+  const q=months.map(mm=>{let t=0,any=false;
+    vs.forEach(v=>{const r=scoreVenue(v,mm); if(!r.none){any=true;t+=r.total*weight/100}});
+    return any?t:null;});
+  const have=q.filter(x=>x!=null);
+  const qavg=have.length? have.reduce((a,b)=>a+b,0)/have.length : 0;
+  h+=`<div class="eyebrow" style="margin-top:26px">Quarter to ${month}</div>
+      <h1 class="pg" style="font-size:24px;margin-bottom:12px">Bonus is assessed on the three-month average</h1>
+      <table class="ap"><thead><tr>
+        <th>${months[0]}</th><th>${months[1]}</th><th>${months[2]}</th>
+        <th>Quarter average</th><th>Band</th><th>Multiplier</th></tr></thead><tbody><tr>`;
+  q.forEach(x=>h+=`<td>${x==null?'<span class="kgrey">no data</span>':'<b>'+x.toFixed(2)+'</b>'}</td>`);
+  h+=`<td><b>${have.length?qavg.toFixed(2):"—"}</b></td>
+      <td>${have.length?bandOf(qavg):"—"}</td>
+      <td><b>${have.length?(allPass?multOf(qavg).toFixed(2)+"×":"0 — gate failed"):"—"}</b></td></tr></tbody></table>`;
+  if(have.length<3) h+=`<div class="hint">Based on ${have.length} month${have.length===1?"":"s"} of the three. The average fills out as months are closed.</div>`;
+
+  /* ---- the note to send ---- */
+  h+=`<div class="eyebrow" style="margin-top:30px">Monthly report</div>
+      <h1 class="pg" style="font-size:24px;margin-bottom:6px">Ready to send</h1>
+      <p class="hint" style="margin-bottom:12px">Click to select, then paste into your email.</p>
+      <textarea class="exp" style="height:230px" onclick="this.select()" readonly>${esc(reportText(month,vs,R,combined,gates,allPass,qavg,have.length))}</textarea>`;
+  $("s-body").innerHTML=h;
+}
+
+/* plain-language monthly summary, written from the figures */
+function reportText(month,vs,R,combined,gates,allPass,qavg,qn){
+  const L=[];
+  L.push(`KITCHEN SCORECARD — ${month}`);
+  L.push(`Umami · Char & Barten · prepared by Chef Irfan Malek`);
+  L.push("");
+  L.push(`Combined score: ${combined.toFixed(2)} — ${bandOf(combined)}`);
+  vs.forEach(v=>{
+    const r=R[v];
+    L.push("");
+    L.push(`${v.toUpperCase()} — ${r.none?"not closed":r.total.toFixed(2)+" ("+bandOf(r.total)+")"}`);
+    r.rows.forEach(x=>{
+      if(x.G==null){ L.push(`  ${x.k.kpi}: awaiting figure`); return; }
+      L.push(`  ${x.k.kpi}: ${x.G} against ${x.F} — ${(x.a*100).toFixed(0)}% ${x.rag[0]}`);
+    });
+    const reds=r.rows.filter(x=>x.rag&&x.rag[0]==="RED");
+    if(reds.length) L.push(`  Requires attention: ${reds.map(x=>x.k.kpi).join("; ")}`);
+  });
+  L.push("");
+  L.push("BONUS GATES");
+  gates.forEach(([n,label,pass])=>L.push(`  ${n} ${pass?"PASS":"FAIL"} — ${label}`));
+  L.push(`  Overall: ${allPass?"PASS":"FAIL"}`);
+  L.push("");
+  L.push(`QUARTER AVERAGE: ${qn?qavg.toFixed(2)+" ("+bandOf(qavg)+")":"not yet available"}${qn&&qn<3?` — based on ${qn} of 3 months`:""}`);
+  const open=S.actions.filter(a=>a.status!=="Closed");
+  L.push("");
+  L.push(`OPEN CORRECTIVE ACTIONS: ${open.length}`);
+  open.slice(0,8).forEach(a=>L.push(`  [${a.priority}] ${a.venue} · ${a.issue} — ${a.owner}, due ${a.due} (${a.status})`));
+  return L.join("\n");
+}
+
+/* ================= CORRECTIVE ACTION TRACKER ================= */
+function addAction(){
+  const g=id=>$(id).value.trim();
+  if(!g("a-issue")){ $("a-issue").focus(); return; }
+  const o={id:S.aEdit||("a"+(S.uid++)), priority:$("a-pri").value, venue:$("a-venue").value,
+    cat:$("a-cat").value, issue:g("a-issue"), impact:g("a-impact"), action:g("a-action"),
+    owner:g("a-owner"), due:g("a-due"), status:$("a-status").value};
+  if(S.aEdit){ S.actions=S.actions.map(x=>x.id===S.aEdit?o:x); S.aEdit=null; $("a-btn").textContent="Add"; }
+  else S.actions.unshift(o);
+  ["a-issue","a-impact","a-action","a-owner","a-due"].forEach(i=>$(i).value="");
+  push({action:"actions",actions:S.actions});
+  renderActions();
+}
+function editAction(id){
+  const o=S.actions.find(x=>x.id===id); if(!o) return;
+  $("a-pri").value=o.priority; $("a-venue").value=o.venue; $("a-cat").value=o.cat;
+  $("a-issue").value=o.issue; $("a-impact").value=o.impact; $("a-action").value=o.action;
+  $("a-owner").value=o.owner; $("a-due").value=o.due; $("a-status").value=o.status;
+  S.aEdit=id; $("a-btn").textContent="Update"; window.scrollTo({top:0,behavior:"smooth"});
+}
+function delAction(id){ S.actions=S.actions.filter(x=>x.id!==id);
+  push({action:"actions",actions:S.actions}); renderActions(); }
+function cycleStatus(id){
+  const o=S.actions.find(x=>x.id===id); if(!o) return;
+  o.status = o.status==="Open"?"WIP":o.status==="WIP"?"Closed":"Open";
+  push({action:"actions",actions:S.actions}); renderActions();
+}
+function renderActions(){
+  $("a-venue").innerHTML=S.outlets.map(o=>`<option>${o}</option>`).join("")+`<option>Both</option>`;
+  const open=S.actions.filter(a=>a.status!=="Closed");
+  $("a-count").innerHTML=S.actions.length
+    ? `${S.actions.length} logged<br>${open.length} still open`
+    : "";
+  if(!S.actions.length){
+    $("a-list").innerHTML=`<div class="empty">No issues logged yet.<br>Add the ones from your review above and they will carry forward until closed.</div>`;
+    return;
+  }
+  const PC={RED:C.red,AMBER:C.brass,GREEN:C.green};
+  const SC={Open:C.mute,WIP:C.brass,Closed:C.green};
+  const order={RED:0,AMBER:1,GREEN:2};
+  const list=[...S.actions].sort((a,b)=>
+    (a.status==="Closed"?1:0)-(b.status==="Closed"?1:0) || order[a.priority]-order[b.priority]);
+  let h=`<table class="ap"><thead><tr>
+    <th style="width:8%">Priority</th><th style="width:9%">Outlet</th><th style="width:22%">Issue</th>
+    <th style="width:22%">Corrective action</th><th style="width:14%">Owner</th>
+    <th style="width:8%">Due</th><th style="width:9%">Status</th><th style="width:8%"></th></tr></thead><tbody>`;
+  list.forEach(a=>{
+    h+=`<tr${a.status==="Closed"?' style="opacity:.55"':''}>
+      <td><span class="pill" style="background:${PC[a.priority]}">${a.priority}</span></td>
+      <td>${esc(a.venue)}<div class="hint" style="margin:0">${esc(a.cat)}</div></td>
+      <td><b>${esc(a.issue)}</b>${a.impact?`<div class="hint" style="margin:0">${esc(a.impact)}</div>`:""}</td>
+      <td>${esc(a.action)}</td><td>${esc(a.owner)}</td><td>${esc(a.due)}</td>
+      <td><span class="pill" style="background:${SC[a.status]};cursor:pointer" onclick="cycleStatus('${a.id}')">${a.status}</span></td>
+      <td style="text-align:right">
+        <button class="wl-b" onclick="editAction('${a.id}')">&#9998;</button>
+        <button class="wl-b" onclick="delAction('${a.id}')">&#10005;</button></td></tr>`;
+  });
+  h+=`</tbody></table><div class="hint">Click a status to move it on: Open → WIP → Closed. Closed items stay on the record rather than disappearing.</div>`;
+  $("a-list").innerHTML=h;
+}
+
+/* ---------- admin ---------- */
+.panel{background:#fff;border:1px solid var(--line);border-radius:11px;padding:22px;margin-bottom:22px}
+.panel h3{font-family:Georgia,serif;font-size:20px;font-weight:400;margin-bottom:4px}
+.panel .ps{font-size:13px;color:var(--mute);margin-bottom:18px;line-height:1.55}
+table.adm{width:100%;border-collapse:collapse;margin-bottom:16px}
+table.adm th{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);
+  text-align:left;padding:0 10px 8px 0;font-weight:700}
+table.adm td{padding:8px 10px 8px 0;border-top:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+table.adm input,table.adm select{padding:8px 10px;font-size:13.5px}
+.addrow{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px}
+.addrow>div{flex:1;min-width:130px}
+.tagrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tag{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);
+  border-radius:999px;padding:7px 8px 7px 15px;font-size:13.5px;font-weight:600}
+.tag button{border:0;background:transparent;cursor:pointer;color:var(--mute);font-size:14px;line-height:1;padding:2px 4px}
+.tag button:hover{color:var(--red)}
+.notes h3{font-family:Georgia,serif;font-size:21px;font-weight:400;margin:26px 0 9px}
+.notes h3:first-child{margin-top:0}
+.notes p{font-size:14px;line-height:1.65;color:var(--slate);margin-bottom:10px}
+.notes ul{margin:0 0 12px 17px}
+.notes li{font-size:14px;line-height:1.62;color:var(--slate);margin-bottom:6px}
+.notes{flex:1;min-width:320px}
+@media(max-width:820px){.notes{display:none}}
+.flash{background:#fff;border-left:4px solid var(--green);padding:13px 15px;border-radius:0 8px 8px 0;
+  font-size:13.5px;color:var(--slate);line-height:1.55;margin-top:14px;display:none}
+.flash.show{display:block}
+@media(max-width:900px){.stage{gap:26px}.kval{flex-basis:98px}}
+@media(max-width:560px){
+  .wrap{padding:18px 12px 50px}
+  .ph-body{padding:18px 16px 22px}
+  .ph-head{padding:14px 16px 12px}
+  .screen{border-radius:10px}
+  .topbar{padding:0 14px;gap:14px}
+  .nav button{padding:0 11px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar" id="topbar" style="display:none">
+  <div class="lockup">
+    <div class="brand">Umami</div>
+    <div class="parent">Alchemy Experience<span class="deg">°</span></div>
+  </div>
+  <div class="nav" id="nav"></div>
+  <div class="me" id="me"></div>
+  <div class="sync" id="sync"></div>
+</div>
+
+<div class="wrap">
+
+<!-- ================= SIGN IN ================= -->
+<div id="v-signin" class="view on">
+  <div class="signwrap">
+    <div class="siglock">
+      <div class="sig-u">Umami</div>
+      <div class="sig-t">The Fifth Taste</div>
+    </div>
+    <h2>Kitchen reporting</h2>
+    <div class="s">Char &amp; Barten &middot; El Gouna<br>
+      <span style="font-size:11.5px;letter-spacing:.1em;text-transform:uppercase">An Alchemy Experience company</span></div>
+    <div id="setup" style="display:none">
+      <div class="covernote" style="margin:0 0 16px">
+        <b>First time on this device.</b> Connect it to your kitchen sheet once and it will remember.
+        The details are stored on this device only — they are never part of the published app.
+      </div>
+      <span class="sub">Apps Script Web app URL</span>
+      <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec">
+      <span class="sub" style="margin-top:10px">Token</span>
+      <input type="text" id="cfg-token" placeholder="the value on line 14 of Code.gs">
+      <button class="btn submit" style="margin-top:12px" onclick="saveCfg()">Connect</button>
+      <div class="hint" id="cfg-hint">Both come from the Apps Script project behind your Google Sheet.</div>
+    </div>
+    <div id="users"></div>
+    <div id="pinbox" style="display:none;margin-top:20px">
+      <span class="sub">PIN</span>
+      <input type="password" inputmode="numeric" maxlength="4" id="i-pin" placeholder="••••"
+             style="text-align:center;letter-spacing:.5em;font-size:19px" onkeydown="if(event.key==='Enter')doSignIn()">
+      <button class="btn submit" style="margin-top:11px" onclick="doSignIn()">Sign in</button>
+      <div class="hint" id="pinhint">Default PIN is 1234 for everyone. Change it in Chefs &amp; outlets.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DAILY LOG ================= -->
+<div id="v-log" class="view">
+  <div class="stage">
+    <div class="phone">
+      <div class="screen">
+        <div class="ph-head">
+          <div class="t" id="log-title">Daily kitchen log</div>
+          <div class="d" id="log-date"></div>
+        </div>
+        <div class="ph-body">
+          <div class="editing-banner" id="editbanner" style="display:none"></div>
+
+          <div class="fgroup" id="venuegroup" style="display:none">
+            <div class="flabel">Kitchen</div>
+            <div class="chips" id="c-venue"></div>
+          </div>
+
+          <div class="fgroup">
+            <div class="flabel">Covers &amp; food revenue</div>
+            <div class="row2">
+              <div><span class="sub">Covers served</span><input type="number" id="i-covers" placeholder="0"></div>
+              <div><span class="sub">Food revenue (EGP)</span><input type="number" id="i-rev" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+            </div>
+          </div>
+
+          <div class="fgroup">
+            <div class="flabel">Waste</div>
+            <div class="row2" style="margin-bottom:8px">
+              <div style="flex:0 0 104px"><span class="sub">Kilograms</span>
+                <input type="number" step="0.1" id="i-wkg" placeholder="0.0"></div>
+              <div><span class="sub">What was it</span>
+                <select id="sel-cat">
+                  <option value="protein">Protein</option><option value="seafood">Seafood</option>
+                  <option value="produce">Produce</option><option value="dairy">Dairy</option>
+                  <option value="dry">Dry &amp; bakery</option><option value="plated">Plated dish</option>
+                </select></div>
+            </div>
+            <span class="sub">Why</span>
+            <select id="sel-reason">
+              <option value="trim">Trim &mdash; unavoidable</option><option value="spoilage">Spoilage</option>
+              <option value="over">Over-production</option><option value="error">Cooking error</option>
+              <option value="return">Guest return</option>
+            </select>
+            <button class="addbtn" id="btn-add" onclick="addLine()">+ Add waste</button>
+            <div id="wlist"></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="fgroup">
+            <div class="flabel">Line check &mdash; fridge &amp; hot hold temps</div>
+            <div class="chips" id="c-temps">
+              <div class="chip ok" data-v="pass">All in range</div>
+              <div class="chip bad" data-v="fail">Out of range</div>
+            </div>
+            <div class="hint">Nothing is ticked for you. Leave blank if the check was not done.</div>
+            <div id="tempbox" style="display:none;margin-top:10px">
+              <div class="row2" style="margin-bottom:8px">
+                <div><span class="sub">Which unit</span>
+                  <select id="sel-tunit">
+                    <option value="Walk-in chiller">Walk-in chiller</option>
+                    <option value="Walk-in freezer">Walk-in freezer</option>
+                    <option value="Undercounter fridge">Undercounter fridge</option>
+                    <option value="Display fridge">Display fridge</option>
+                    <option value="Hot holding">Hot holding</option>
+                    <option value="Blast chiller">Blast chiller</option>
+                    <option value="Other">Other unit</option>
+                  </select></div>
+                <div style="flex:0 0 108px"><span class="sub">Reading &deg;C</span>
+                  <input type="number" step="0.1" id="i-treading" placeholder="e.g. 9.4"></div>
+              </div>
+              <span class="sub">What did you do with the food</span>
+              <select id="sel-taction">
+                <option value="discarded">Stock discarded</option>
+                <option value="moved">Stock moved to another unit</option>
+                <option value="rechilled">Re-chilled and re-checked</option>
+                <option value="reheated">Reheated to temperature</option>
+                <option value="none">Nothing yet</option>
+              </select>
+              <textarea id="i-tnote" placeholder="Optional — how long it had been out, roughly what value of stock" style="margin-top:8px"></textarea>
+              <div class="hint">This is the record TÜV asks for. Unit, reading and what happened to the food.</div>
+            </div>
+          </div>
+
+          <div class="fgroup">
+            <div class="flabel">Recipe compliance spot-check</div>
+            <span class="sub">Which dish did you check</span>
+            <select id="sel-dish" onchange="dishPick()"></select>
+            <input type="text" id="i-dishother" placeholder="Name the dish" style="margin-top:8px;display:none">
+            <div class="covernote" id="covernote"></div>
+            <div class="chips" id="c-recipe" style="margin-top:10px">
+              <div class="chip ok" data-v="pass">Matched spec</div>
+              <div class="chip bad" data-v="fail">Deviation found</div>
+            </div>
+            <div id="dev" style="display:none;margin-top:10px">
+              <span class="sub">What was off</span>
+              <select id="sel-dev">
+                <option value="portion">Portion weight off spec</option>
+                <option value="ingredient">Ingredient substituted</option>
+                <option value="method">Method not followed</option>
+                <option value="plating">Plating off spec</option>
+                <option value="season">Seasoning or temperature</option>
+              </select>
+              <textarea id="i-devnote" placeholder="Optional — what you saw, and who was on the section" style="margin-top:8px"></textarea>
+            </div>
+            <div class="hint">You choose the dish. The app keeps the record so gaps are visible.</div>
+          </div>
+
+          <div class="fgroup">
+            <div class="flabel">Average ticket time (minutes)</div>
+            <input type="number" id="i-ticket" placeholder="Leave blank if not measured">
+            <div class="hint">Fills automatically once the KDS/POS feed is connected.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="fgroup">
+            <div class="flabel">Brigade</div>
+            <div class="row3">
+              <div><span class="sub">Rostered</span><input type="number" id="i-rostered" placeholder="0" oninput="absence()"></div>
+              <div><span class="sub">On vacation</span><input type="number" id="i-vac" placeholder="0" oninput="absence()"></div>
+              <div><span class="sub">Absent</span><input type="number" id="i-abs" placeholder="0" oninput="absence()"></div>
+            </div>
+            <div class="row2" style="margin-top:8px">
+              <div><span class="sub">Positions vacant</span>
+                <input type="number" id="i-vacant" placeholder="0" oninput="absence()"></div>
+              <div><span class="sub">of which critical</span>
+                <input type="number" id="i-critvac" placeholder="0" oninput="absence()"></div>
+            </div>
+            <div class="hint" id="h-absence"></div>
+          </div>
+
+          <div class="fgroup">
+            <div class="flabel">Guest food feedback</div>
+            <div class="row2" style="margin-bottom:8px">
+              <div><span class="sub">How was the food</span>
+                <select id="sel-fb">
+                  <option value="">&mdash; choose &mdash;</option>
+                  <option value="great">5 &mdash; Great</option>
+                  <option value="good">4 &mdash; Good</option>
+                  <option value="ok">3 &mdash; Acceptable</option>
+                  <option value="poor">2 &mdash; Poor</option>
+                  <option value="bad">1 &mdash; Very bad</option>
+                </select></div>
+              <div><span class="sub">Dish</span>
+                <input type="text" id="i-fbdish" list="dishlist" placeholder="Type or leave blank"></div>
+            </div>
+            <datalist id="dishlist"></datalist>
+            <textarea id="i-fbnote" placeholder="What was said, in the guest's words if you can"></textarea>
+            <button class="addbtn" id="btn-fb" onclick="addFb()">+ Add comment</button>
+            <div id="fblist"></div>
+          </div>
+
+          <div class="fgroup">
+            <div class="flabel">Items 86&rsquo;d</div>
+            <div class="row2" style="margin-bottom:8px">
+              <div><span class="sub">Item</span>
+                <input type="text" id="i-86item" placeholder="What came off the menu"></div>
+              <div><span class="sub">Why</span>
+                <select id="sel-86">
+                  <option value="">&mdash; choose &mdash;</option>
+                  <option value="not_delivered">Ordered but not delivered</option>
+                  <option value="not_ordered">Not ordered</option>
+                  <option value="no_stock">Stores had no stock</option>
+                  <option value="rejected">Rejected on quality at delivery</option>
+                  <option value="supplier_out">Supplier out of stock</option>
+                  <option value="ran_out">Ran out during service</option>
+                  <option value="equipment">Equipment down</option>
+                  <option value="other">Other</option>
+                </select></div>
+            </div>
+            <textarea id="i-86note" placeholder="Optional — how long it was off, and whether guests were turned away"></textarea>
+            <button class="addbtn" id="btn-86" onclick="add86()">+ Add 86</button>
+            <div id="list86"></div>
+          </div>
+
+          <div class="fgroup">
+            <div class="flabel">Equipment or supplier issue</div>
+            <div class="row2" style="margin-bottom:8px">
+              <div><span class="sub">Type</span>
+                <select id="sel-iss"><option value="">&mdash; choose &mdash;</option>
+                  <option value="equipment">Equipment</option><option value="supplier">Supplier</option></select></div>
+              <div><span class="sub">Impact</span>
+                <select id="sel-imp"><option value="">&mdash; choose &mdash;</option>
+                  <option value="stops">Stops service</option>
+                  <option value="slows">Slows service</option><option value="wait">Can wait</option></select></div>
+            </div>
+            <div style="margin-bottom:8px"><span class="sub">Hours unavailable (equipment only)</span>
+              <input type="number" step="0.5" id="i-isshrs" placeholder="0"></div>
+            <textarea id="i-issnote" placeholder="What is it — be specific enough for maintenance or purchasing to act"></textarea>
+            <button class="addbtn" id="btn-iss" onclick="addIss()">+ Add issue</button>
+            <div id="isslist"></div>
+          </div>
+
+          <button class="btn submit" id="btn-save" onclick="saveLog()">Save today&rsquo;s report</button>
+          <button class="btn ghost submit" id="btn-cancel" style="margin-top:8px;display:none" onclick="cancelEdit()">Cancel</button>
+          <div class="stamp" id="stamp"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="eyebrow">Daily log</div>
+      <h1 class="pg">One log per service. The report writes itself.</h1>
+      <p class="lead">Head chefs fill this in at the end of service &mdash; roughly nine fields, mostly taps. Saving it creates a dated report you can reopen, review and correct before it goes anywhere.</p>
+      <h3>How it flows</h3>
+      <ul>
+        <li>The head chef saves the day&rsquo;s log. It appears under <b>Daily summary report</b> as a dated entry they can reopen and edit.</li>
+        <li>Each chef sees only their own kitchen. The Executive Chef sees both.</li>
+        <li>Only the Executive Chef can release a report to the <b>Management dashboard</b>. Once released, it locks for the head chef.</li>
+        <li>Exceptions &mdash; failed checks, deviations, faults, complaints &mdash; become action-plan rows on their own, with a named owner and a deadline.</li>
+      </ul>
+      <div class="flash" id="flash"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= REPORTS ================= -->
+<div id="v-reports" class="view">
+  <div class="dash-head">
+    <div>
+      <div class="eyebrow" id="rpt-scope"></div>
+      <h1 class="pg" style="margin:0">Daily summary report</h1>
+    </div>
+    <div class="when" id="rpt-count"></div>
+  </div>
+  <div id="rpt-list"></div>
+</div>
+
+<!-- ================= DASHBOARD ================= -->
+<div id="v-dash" class="view">
+  <div class="dash-head">
+    <div>
+      <div class="eyebrow">Alchemy Experience &middot; Umami &middot; El Gouna</div>
+      <h1 class="pg" style="margin:0">Kitchen KPI dashboard</h1>
+    </div>
+    <div class="when">
+      Char &amp; Barten &middot; H1 2026 baseline<br>
+      <span id="live-note">No reports released yet</span>
+    </div>
+  </div>
+  <div id="bands"></div>
+  <div class="read" id="read"></div>
+  <div class="eyebrow">Weekly action plan</div>
+  <h1 class="pg" style="font-size:25px;margin-bottom:16px">Every issue has an owner and a date</h1>
+  <table class="ap">
+    <thead><tr><th style="width:22%">Issue</th><th style="width:30%">Corrective action</th>
+      <th style="width:17%">Responsible</th><th style="width:14%">Deadline</th><th style="width:17%">Status</th></tr></thead>
+    <tbody id="ap-body"></tbody>
+  </table>
+  <div class="foot">Statuses carry forward so nothing drops off quietly. Baseline figures are the H1 2026 actuals from the cost reconciliation and Blackbook files; KPIs with no source data show as not yet measured rather than estimated.</div>
+</div>
+
+
+<!-- ================= MONTHLY CLOSE ================= -->
+<div id="v-month" class="view">
+  <div class="dash-head">
+    <div>
+      <div class="eyebrow">Executive Chef only</div>
+      <h1 class="pg" style="margin:0">Monthly close</h1>
+    </div>
+    <div class="when">
+      <span class="sub" style="display:inline">Month</span>
+      <input type="month" id="m-month" onchange="loadMonth()" style="width:150px;padding:7px 9px;font-size:13px">
+      <div class="chips" id="m-venue" style="margin-top:8px;justify-content:flex-end"></div>
+    </div>
+  </div>
+
+  <p class="lead" style="margin-bottom:20px">Enter the figures as they arrive from each department. What your own logs
+  already show is in the right-hand column, so you can see where a department&rsquo;s number disagrees with the floor
+  before you sign anything off.</p>
+
+  <div id="m-form"></div>
+
+  <div style="display:flex;gap:10px;margin:22px 0 30px;flex-wrap:wrap">
+    <button class="btn" onclick="saveMonth()">Save month</button>
+    <button class="btn ghost" onclick="loadMonth()">Discard changes</button>
+    <span class="hint" id="m-saved" style="align-self:center"></span>
+  </div>
+
+  <div class="eyebrow">Calculated scorecard</div>
+  <h1 class="pg" style="font-size:25px;margin-bottom:6px">Scored exactly as your Excel scores it</h1>
+  <p class="hint" style="margin-bottom:16px">Same weights, same tiers, same bands &mdash; so these figures tie back to the sheet you send.</p>
+  <div id="m-score"></div>
+
+  <div class="eyebrow" style="margin-top:34px">Export to the scorecard</div>
+  <h1 class="pg" style="font-size:25px;margin-bottom:6px">Paste straight into the Actual column</h1>
+  <p class="hint" style="margin-bottom:16px">The values are in scorecard row order. Click a box to select it all, copy, then paste into the first cell shown &mdash; Excel fills the rest down.</p>
+  <div id="m-export"></div>
+</div>
+
+
+<!-- ================= SCORECARD ================= -->
+<div id="v-score" class="view">
+  <div class="dash-head">
+    <div>
+      <div class="eyebrow">Alchemy Experience &middot; Umami &middot; El Gouna</div>
+      <h1 class="pg" style="margin:0">Monthly scorecard</h1>
+    </div>
+    <div class="when">
+      <span class="sub" style="display:inline">Month</span>
+      <input type="month" id="s-month" onchange="renderScore()" style="width:150px;padding:7px 9px;font-size:13px">
+    </div>
+  </div>
+  <div id="s-body"></div>
+</div>
+
+<!-- ================= ACTIONS ================= -->
+<div id="v-actions" class="view">
+  <div class="dash-head">
+    <div>
+      <div class="eyebrow">Carried forward until closed</div>
+      <h1 class="pg" style="margin:0">Corrective action tracker</h1>
+    </div>
+    <div class="when" id="a-count"></div>
+  </div>
+  <p class="lead" style="margin-bottom:18px">Issues raised by management review. Anything your daily logs raise
+  automatically appears under Operations &mdash; this is for the items that need an owner and a date attached to them.</p>
+  <div class="panel">
+    <h3>Add an issue</h3>
+    <div class="addrow" style="border:0;padding:0;margin-bottom:10px">
+      <div style="flex:0 0 110px"><span class="sub">Priority</span>
+        <select id="a-pri"><option value="RED">RED</option><option value="AMBER">AMBER</option><option value="GREEN">GREEN</option></select></div>
+      <div style="flex:0 0 120px"><span class="sub">Outlet</span><select id="a-venue"></select></div>
+      <div style="flex:0 0 140px"><span class="sub">Category</span>
+        <select id="a-cat"><option>Cost</option><option>Waste</option><option>Operations</option>
+          <option>People</option><option>Compliance</option><option>Inventory</option>
+          <option>Training</option><option>Equipment</option><option>Supplier</option><option>Food Quality</option></select></div>
+      <div><span class="sub">Issue / root cause</span><input type="text" id="a-issue"></div>
+    </div>
+    <div class="addrow" style="border:0;padding:0">
+      <div><span class="sub">Impact</span><input type="text" id="a-impact"></div>
+      <div><span class="sub">Corrective action</span><input type="text" id="a-action"></div>
+      <div style="flex:0 0 150px"><span class="sub">Owner</span><input type="text" id="a-owner"></div>
+      <div style="flex:0 0 110px"><span class="sub">Due</span><input type="text" id="a-due" placeholder="31/08"></div>
+      <div style="flex:0 0 110px"><span class="sub">Status</span>
+        <select id="a-status"><option>Open</option><option>WIP</option><option>Closed</option></select></div>
+      <button class="btn" id="a-btn" onclick="addAction()">Add</button>
+    </div>
+  </div>
+  <div id="a-list"></div>
+</div>
+
+<!-- ================= ADMIN ================= -->
+<div id="v-admin" class="view">
+  <div class="dash-head">
+    <div>
+      <div class="eyebrow">Executive Chef only</div>
+      <h1 class="pg" style="margin:0">Chefs &amp; outlets</h1>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>People</h3>
+    <div class="ps">Anyone listed here can sign in. Head chefs and sous chefs see only their own kitchen; the Executive Chef sees every kitchen and is the only role that can release a report to the management dashboard.</div>
+    <table class="adm"><thead><tr>
+      <th style="width:26%">Name</th><th style="width:20%">Role</th><th style="width:20%">Outlet</th>
+      <th style="width:14%">PIN</th><th></th></tr></thead>
+      <tbody id="adm-users"></tbody></table>
+    <div class="addrow">
+      <div><span class="sub">Name</span><input type="text" id="nu-name" placeholder="Chef ..."></div>
+      <div><span class="sub">Role</span><select id="nu-role">
+        <option value="Head Chef">Head Chef</option><option value="Sous Chef">Sous Chef</option>
+        <option value="Executive Chef">Executive Chef</option></select></div>
+      <div><span class="sub">Outlet</span><select id="nu-venue"></select></div>
+      <div style="flex:0 0 90px"><span class="sub">PIN</span><input type="text" maxlength="4" id="nu-pin" value="1234"></div>
+      <button class="btn" onclick="addUser()">Add</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Outlets</h3>
+    <div class="ps">Add a kitchen and it becomes available to assign people to. Removing one is blocked while anyone is still assigned to it.</div>
+    <div class="tagrow" id="adm-outlets"></div>
+    <div class="addrow" style="border:0;padding:0">
+      <div style="flex:0 0 240px"><span class="sub">New outlet</span><input type="text" id="no-name" placeholder="e.g. La Plancha"></div>
+      <button class="btn" onclick="addOutlet()">Add outlet</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+/* Settings live in config.js — edit that file, not this one.
+   If it is missing, the app falls back to demo mode and saves nothing. */
+/* Settings resolve in this order:
+   1. saved on this device (entered once, never published)
+   2. config.js, if one was shipped alongside
+   Nothing sensitive needs to live in the code, so the repo can be public. */
+function loadCfg(){
+  try{ const v=localStorage.getItem("umami_cfg"); if(v) return JSON.parse(v); }catch(e){}
+  return window.KITCHEN_CONFIG || {};
+}
+const CFG       = loadCfg();
+const API_URL   = CFG.API_URL   || "";
+const API_TOKEN = CFG.API_TOKEN || "";   /* supplied per device, or by config.js */
+
+function saveCfg(){
+  const u=$("cfg-url").value.trim(), t=$("cfg-token").value.trim();
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){
+    $("cfg-hint").innerHTML="<b>That does not look like the Web app URL.</b> It starts https://script.google.com/macros/s/ and ends /exec";
+    return;
+  }
+  if(!t){ $("cfg-hint").innerHTML="<b>Enter the token</b> — the same value as line 14 of Code.gs."; return; }
+  try{ localStorage.setItem("umami_cfg",JSON.stringify({API_URL:u,API_TOKEN:t})); }
+  catch(e){ $("cfg-hint").innerHTML="<b>This browser will not save settings.</b> Turn off private browsing and try again."; return; }
+  location.reload();
+}
+function forgetCfg(){
+  try{ localStorage.removeItem("umami_cfg"); }catch(e){}
+  location.reload();
+}
+
+/* Served from Google Apps Script? Then talk to it directly — no network
+   request leaves the browser, so nothing can block or time out. */
+const IN_APPS = (typeof google!=="undefined" && google.script && google.script.run);
+function gsRun(payload){
+  return new Promise((resolve,reject)=>{
+    google.script.run
+      .withSuccessHandler(r=>{
+        if(r&&r.error) reject(new Error(r.error==="Unauthorised"
+          ? "Unauthorised — the script rejected its own token, which should not happen. Re-paste Code.gs."
+          : r.error));
+        else resolve(r);
+      })
+      .withFailureHandler(e=>reject(new Error((e&&e.message)||"The script returned an error.")))
+      .apiCall(payload);
+  });
+}
+const LIVE = () => IN_APPS || API_URL.length > 0;
+
+const C={green:"#3D6B55",brass:"#C8A24B",red:"#B23A2E",mute:"#8C857A",ember:"#D8552F"};
+
+/* ---------- network ----------
+   Apps Script rejects a JSON preflight, so posts go as text/plain.
+   Anything that fails is queued and retried rather than lost.       */
+let NET={online:true, queue:[], busy:false, err:"", tried:0, loading:false};
+
+async function api(payload){
+  NET.tried++;
+  if(IN_APPS) return gsRun(payload);
+  const body={...payload, token:API_TOKEN};
+  let r;
+  /* Apps Script can be slow to wake. Give it 25s, then give up cleanly
+     rather than leaving the request hanging. */
+  const ac=("AbortController" in window)? new AbortController() : null;
+  const timer=ac? setTimeout(()=>ac.abort(),25000) : null;
+  try{
+    r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(body), signal:ac?ac.signal:undefined});
+  }catch(e){
+    if(e&&e.name==="AbortError")
+      throw new Error("The server took too long to answer. It is usually just slow to wake — try again in a moment.");
+    /* a browser that blocks the request never gives us a status code */
+    throw new Error(location.protocol==="file:"
+      ? "Blocked because the page was opened from your hard drive (file://). Put it online and this goes away."
+      : "Could not reach the server. Check the URL in config.js, and that the deployment is set to Anyone.");
+  }finally{
+    if(timer) clearTimeout(timer);
+  }
+  if(!r.ok) throw new Error("Server replied HTTP "+r.status+". Re-deploy the Apps Script as a New version.");
+  let j;
+  try{ j=await r.json(); }
+  catch(e){ throw new Error("The URL did not return data. It usually means the deployment is private, or the URL is the /dev one instead of /exec."); }
+  if(j.error) throw new Error(j.error==="Unauthorised"
+    ? "Unauthorised — the token in config.js does not match the one in Code.gs."
+    : j.error);
+  return j;
+}
+/* fire-and-queue: the chef never waits on the network to finish a log */
+function push(payload){
+  if(!LIVE()) return;
+  NET.queue.push(payload); flush();
+}
+async function flush(){
+  if(!LIVE()||NET.busy||!NET.queue.length) return;
+  NET.busy=true;
+  while(NET.queue.length){
+    try{ await api(NET.queue[0]); NET.queue.shift(); NET.online=true; NET.err=""; }
+    catch(e){ NET.online=false; NET.err=e.message; break; }
+    syncBadge();
+  }
+  NET.busy=false; syncBadge();
+  if(NET.queue.length) setTimeout(flush,15000);
+}
+function whyOffline(){
+  if(NET.online&&!NET.err) return;
+  alert("Not saving to the sheet\n\n"+(NET.err||"Unknown error")+
+    (NET.queue.length? "\n\n"+NET.queue.length+" log(s) are held on this device and will send once the connection works.":""));
+}
+function syncBadge(){
+  const el=$("sync"); if(!el) return;
+  el.style.cursor = NET.online? "default":"pointer";
+  el.onclick = NET.online? null : whyOffline;
+  if(!LIVE()){ el.innerHTML=`<span class="sdot" style="background:${C.mute}"></span>Demo — not saving`; return; }
+  if(NET.loading)      el.innerHTML=`<span class="sdot" style="background:${C.brass}"></span>Connecting&hellip;`;
+  else if(NET.queue.length) el.innerHTML=`<span class="sdot" style="background:${C.brass}"></span>${NET.queue.length} waiting to sync`;
+  else if(!NET.online)  el.innerHTML=`<span class="sdot" style="background:${C.red}"></span>Offline &mdash; <u>why?</u>`;
+  else el.innerHTML=`<span class="sdot" style="background:${C.green}"></span>Saved${IN_APPS?" to the sheet":""}`;
+}
+async function boot(){
+  /* Draw first, always. The screen must never wait on the network —
+     a stalled request used to leave the page blank. */
+  renderUsers(); syncBadge();
+  /* be explicit both ways, so re-running boot never leaves a stale panel */
+  const needsSetup = !IN_APPS && !API_URL;
+  $("setup").style.display = needsSetup ? "block" : "none";
+  $("users").style.display = needsSetup ? "none"  : "block";
+  if(needsSetup) return;
+  if(!LIVE()) return;
+  NET.loading=true; syncBadge();
+  try{
+    const j=await api({action:"bootstrap"});
+    if(j.users&&j.users.length)   S.users=j.users;
+    if(j.outlets&&j.outlets.length) S.outlets=j.outlets;
+    if(j.reports) S.reports=j.reports.sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
+    if(j.months) S.monthly=j.months;
+    if(j.signoff) S.signoff=j.signoff;
+    if(j.actions) S.actions=j.actions;
+    if(j.rates) Object.keys(j.rates).forEach(k=>{const e=$("r-"+k); if(e&&j.rates[k]) e.value=j.rates[k]});
+    NET.online=true;
+  }catch(e){ NET.online=false; NET.err=e.message; }
+  NET.loading=false;
+  renderUsers(); syncBadge();
+}
+function saveRates(){
+  const r={}; ["protein","seafood","produce","dairy","dry","plated"].forEach(k=>{
+    const v=+($("r-"+k).value||0); if(v) r[k]=v; });
+  push({action:"rates",rates:r});
+}
+
+let S={
+  users:[
+    {id:"u3",name:"Chef Irfan Malek",  role:"Executive Chef", venue:"",       pin:"1234"},
+    {id:"u1",name:"Chef Hossam Hassan",role:"Head Chef",      venue:"Char",   pin:"1234"},
+    {id:"u2",name:"Chef Mustafa Said", role:"Head Chef",      venue:"Barten", pin:"1234"}
+  ],
+  outlets:["Char","Barten"],
+  user:null, pick:null, view:"log", monthly:{}, mVenue:null,
+  signoff:{}, actions:[], aEdit:null,
+  venue:"Char",
+  reports:[], editingId:null,
+  lines:[], editIdx:null, fbs:[], fbIdx:null, isss:[], issIdx:null,
+  temps:"", recipe:"", checked:{}, openId:null, uid:4
+};
+
+const isExec = u => u && u.role==="Executive Chef";
+
+/* dishes from the H1 2026 sales mix; a real build would load the full menu */
+const DISHES={
+  Char:["Tenderloin (Local)","Ribeye (Russian)","US Prime Black Angus Beef Tenderloin",
+        "US Prime Black Angus Tomahawk","7 Days Dry Aged Beef Rib Eye","7 Days Dry Aged Beef Fillet"],
+  Barten:["Smoked Salmon Philadelphia Roll","Barten Sushi","Beef Teriyaki"]
+};
+const CATN={protein:"Protein",seafood:"Seafood",produce:"Produce",dairy:"Dairy",dry:"Dry & bakery",plated:"Plated dish"};
+const REASON={trim:"trim",spoilage:"spoilage",over:"over-production",error:"cooking error",return:"guest returns"};
+const FIX={spoilage:"Stock rotation checked and par levels reviewed for the affected line",
+  over:"Production quantities reset against forecast covers for that section",
+  error:"Section re-briefed on method; re-checked next service",
+  return:"Dish reviewed against spec and the guest comment logged"};
+const OWNER={spoilage:"Storekeeper",over:"Sous chef",error:"Head chef",return:"Head chef"};
+const DEV={
+  portion:{t:"portion weight off spec",fix:"Re-weighed against spec and scales checked on the section",own:"Sous chef",red:true},
+  ingredient:{t:"ingredient substituted",fix:"Substitution logged and raised with purchasing",own:"Purchasing",red:true},
+  method:{t:"method not followed",fix:"Section re-briefed against the written method",own:"Head chef",red:false},
+  plating:{t:"plating off spec",fix:"Plate-up photo reissued to the section",own:"Head chef",red:false},
+  season:{t:"seasoning or temperature off",fix:"Re-tasted against spec at the next brief",own:"Head chef",red:false}};
+const FB={
+  great:{n:5,t:"Great",     fix:"Passed on to the section",                                        c:C.green, act:false},
+  good: {n:4,t:"Good",      fix:"Passed on to the section",                                        c:C.green, act:false},
+  ok:   {n:3,t:"Acceptable",fix:"Noted; watch the dish over the next few services",                c:C.brass, act:true},
+  poor: {n:2,t:"Poor",      fix:"Dish re-checked against spec with the section before next service", c:C.red, act:true},
+  bad:  {n:1,t:"Very bad",  fix:"Dish pulled and re-tasted against spec; cause found before it is served again", c:C.red, act:true}
+};
+/* Why an item came off the menu — each cause belongs to a different person */
+const R86={
+  not_delivered:{t:"ordered but not delivered", fix:"Chase the supplier and confirm the delivery window; log the shortfall", own:"Purchasing",  c:C.red},
+  not_ordered:  {t:"not ordered",               fix:"Order raised; par levels and the ordering routine reviewed",             own:"Head chef",   c:C.red},
+  no_stock:     {t:"stores had no stock",       fix:"Stock check against par; requisition raised",                            own:"Storekeeper", c:C.brass},
+  rejected:     {t:"rejected on quality",       fix:"Rejection logged with the supplier; replacement arranged",               own:"Purchasing",  c:C.brass},
+  supplier_out: {t:"supplier out of stock",     fix:"Alternative supplier or substitute agreed for the menu",                 own:"Purchasing",  c:C.brass},
+  ran_out:      {t:"ran out during service",    fix:"Prep quantities reset against forecast covers",                          own:"Head chef",   c:C.brass},
+  equipment:    {t:"equipment down",            fix:"Reported to maintenance; workaround agreed for service",                 own:"Maintenance", c:C.red},
+  other:        {t:"other",                     fix:"Cause recorded and reviewed at the next brief",                          own:"Head chef",   c:C.mute}
+};
+const IMP={stops:{t:"stops service",dl:"Today",c:C.red},slows:{t:"slows service",dl:"48 hours",c:C.brass},
+  wait:{t:"can wait",dl:"This week",c:C.mute}};
+const ISS={equipment:{t:"Equipment",own:"Maintenance"},supplier:{t:"Supplier",own:"Purchasing"}};
+/* What was done with food that went out of range, and how serious that leaves it */
+const TACT={
+  discarded:{t:"stock discarded",  fix:"Stock discarded and waste logged; unit checked before restocking",              c:C.brass},
+  moved:    {t:"stock moved",      fix:"Stock moved to a sound unit and re-checked; faulty unit reported to maintenance", c:C.brass},
+  rechilled:{t:"re-chilled",       fix:"Re-chilled and re-checked to spec; monitored over the next two services",         c:C.brass},
+  reheated: {t:"reheated",         fix:"Reheated to temperature and re-checked; hot-hold monitored",                      c:C.brass},
+  none:     {t:"nothing done yet", fix:"DECIDE NOW: discard, move or re-chill. Nothing may stay out of range",            c:C.red}
+};
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+function initials(n){const p=n.replace(/^Chef\s+/i,"").trim().split(/\s+/);
+  return (((p[0]||"")[0]||"")+((p[1]||"")[0]||"")).toUpperCase()}
+const money=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtDate=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+const keyOf=d=>d.toISOString().slice(0,10);
+function chefName(v){const u=S.users.find(x=>x.venue===v&&x.role!=="Executive Chef");return u?u.name:"Head chef, "+v}
+function ownerName(role,v){
+  if(/head chef|sous chef/i.test(role)) return chefName(v);
+  if(/chef irfan/i.test(role)) return "Chef Irfan Malek";
+  return role;
+}
+
+/* ---------- sign in ---------- */
+function renderUsers(){
+  const ex=S.users.filter(isExec), rest=S.users.filter(u=>!isExec(u));
+  const card=u=>`<button class="ucard ${S.pick===u.id?'on':''}" onclick="pickUser('${u.id}')">
+      <span class="uav">${initials(u.name)}</span>
+      <span><span class="un">${esc(u.name)}</span>
+      <span class="ur">${u.role}${u.venue?" · "+u.venue+" kitchen":" · all kitchens"}</span></span></button>`;
+  $("users").innerHTML =
+    (ex.length? `<div class="grouplab">Executive</div>`+ex.map(card).join("") : "") +
+    (rest.length? `<div class="grouplab">Kitchens</div>`+rest.map(card).join("") : "");
+}
+function pickUser(id){S.pick=id;renderUsers();$("pinbox").style.display="block";$("i-pin").value="";$("i-pin").focus()}
+function doSignIn(){
+  const u=S.users.find(x=>x.id===S.pick);
+  if(!u) return;
+  if($("i-pin").value!==u.pin){$("pinhint").innerHTML="<b>Wrong PIN.</b> Default is 1234 unless it was changed.";return}
+  S.user=u; S.venue=isExec(u)? S.outlets[0] : u.venue;
+  $("topbar").style.display="flex";
+  renderNav(); newLog(); setView("log");
+}
+function signOut(){
+  S.user=null;S.pick=null;S.editingId=null;S.openId=null;
+  $("topbar").style.display="none";$("pinbox").style.display="none";
+  renderUsers(); setView("signin");
+}
+
+/* ---------- nav ---------- */
+function renderNav(){
+  const tabs=[["log","Daily log"],["reports","Daily summary report"]];
+  if(isExec(S.user)) tabs.push(["month","Monthly close"],["score","Scorecard"],
+        ["actions","Actions"],["dash","Operations"],["admin","Chefs & outlets"]);
+  $("nav").innerHTML=tabs.map(([k,t])=>`<button class="${S.view===k?'on':''}" onclick="setView('${k}')">${t}</button>`).join("");
+  $("me").innerHTML=`<span>Signed in as <b>${esc(S.user.name)}</b>${S.user.venue?" · "+S.user.venue:""}</span>
+    <a onclick="signOut()">Sign out</a>` +
+    (IN_APPS ? "" : ` <a onclick="if(confirm('Disconnect this device from the sheet?'))forgetCfg()">Disconnect</a>`);
+}
+function setView(v){
+  S.view=v;
+  ["signin","log","reports","month","score","actions","dash","admin"]
+    .forEach(k=>$("v-"+k).classList.toggle("on",k===v));
+  if(S.user) renderNav();
+  if(v==="reports") renderReports();
+  if(v==="dash"){ applyReports(); renderDash(); }
+  if(v==="admin") renderAdmin();
+  if(v==="month"){ initMonth(); }
+  if(v==="score"){ initScore(); }
+  if(v==="actions"){ renderActions(); }
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------- log form ---------- */
+function venueChips(){
+  $("c-venue").innerHTML=S.outlets.map(o=>
+    `<div class="chip ${S.venue===o?'on':''}" onclick="setVenue('${o}')">${o}</div>`).join("");
+}
+function setVenue(o){S.venue=o;venueChips();fillDishes();coverage()}
+function fillDishes(){
+  const list=DISHES[S.venue]||[];
+  const opts=list.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+  /* blank first: nothing is chosen for the chef */
+  $("sel-dish").innerHTML=`<option value="">— choose a dish —</option>`+opts+`<option value="__other">Other dish…</option>`;
+  $("dishlist").innerHTML=opts;   /* type-ahead suggestions only */
+  dishPick();
+}
+function dishPick(){
+  const o=$("i-dishother");
+  o.style.display=$("sel-dish").value==="__other"?"block":"none";
+  coverage();
+}
+function currentDish(){
+  const v=$("sel-dish").value;
+  if(v==="__other") return $("i-dishother").value.trim();
+  return v;   /* "" means no spot-check was done */
+}
+function coverage(){
+  const done=S.checked[S.venue]||[], el=$("covernote"), list=DISHES[S.venue]||[];
+  if(!done.length){el.innerHTML=`Nothing checked at ${S.venue} yet this week. You choose the dish &mdash; the app records which ones you have covered.`;return}
+  const missing=list.filter(d=>!done.includes(d));
+  el.innerHTML=`<b>Checked this week:</b> ${done.map(esc).join(", ")}.`+
+    (missing.length?` Not yet covered: ${missing.map(esc).join(", ")}.`:` Every dish on the list covered.`);
+}
+function brigade(){
+  const r=+$("i-rostered").value||0,v=+$("i-vac").value||0,a=+$("i-abs").value||0;
+  return {r,v,a,floor:r-v-a,
+          vacant:+$("i-vacant").value||0, crit:+$("i-critvac").value||0};
+}
+function absence(){
+  const {r,v,a,floor}=brigade(),el=$("h-absence");
+  if(floor<0){el.innerHTML="Vacation and absence exceed the roster &mdash; check the numbers.";return}
+  let s=`<b>${floor} on the floor today</b>`;
+  if(v)s+=` &middot; ${v} on vacation`;
+  if(a)s+=` &middot; ${a} absent (${r?(a/r*100).toFixed(0):0}%)`;
+  const B=brigade();
+  if(B.vacant)s+=` &middot; ${B.vacant} vacant${B.crit?", "+B.crit+" critical":""}`;
+  s+= a?`. Unplanned absence is logged and reviewed if it repeats.`
+       :(v?`. Planned leave only.`:`, full brigade.`);
+  el.innerHTML=s;
+}
+function toggleRates(){const r=$("rates"),t=$("rates-toggle"),o=r.style.display==="none";
+  r.style.display=o?"block":"none";t.textContent=o?"Hide":"Show";renderLines()}
+const rate=c=>{const e=$("r-"+c);return e?(+e.value||0):0};
+function setBtn(id,t){const b=$(id);b.textContent=t;b.classList.add("editing")}
+function resetBtn(id,t){const b=$(id);b.textContent=t;b.classList.remove("editing")}
+
+function addLine(){
+  const kg=+$("i-wkg").value||0; if(kg<=0){$("i-wkg").focus();return}
+  const l={kg,cat:$("sel-cat").value,reason:$("sel-reason").value};
+  if(S.editIdx===null)S.lines.push(l);else{S.lines[S.editIdx]=l;S.editIdx=null}
+  $("i-wkg").value="";resetBtn("btn-add","+ Add waste");renderLines();
+}
+function editLine(i){const l=S.lines[i];$("i-wkg").value=l.kg;$("sel-cat").value=l.cat;$("sel-reason").value=l.reason;
+  S.editIdx=i;setBtn("btn-add","Update");renderLines()}
+function delLine(i){S.lines.splice(i,1);
+  if(S.editIdx===i){S.editIdx=null;resetBtn("btn-add","+ Add waste");$("i-wkg").value=""}else if(S.editIdx>i)S.editIdx--;
+  renderLines()}
+function wasteTotals(ls){let kg=0,egp=0,priced=true;
+  (ls||S.lines).forEach(l=>{kg+=l.kg;const r=rate(l.cat);if(r)egp+=l.kg*r;else priced=false});return{kg,egp,priced}}
+function renderLines(){
+  const b=$("wlist");
+  if(!S.lines.length){b.innerHTML=`<div class="wempty">Nothing logged yet. Add each thing that goes in the bin &mdash; you can edit or remove anything before saving.</div>`;return}
+  let h="";
+  S.lines.forEach((l,i)=>{const r=rate(l.cat);
+    h+=`<div class="wline ${S.editIdx===i?'sel':''}"><div class="wl-main">
+      <div class="wl-t">${l.kg} kg &middot; ${CATN[l.cat]}</div>
+      <div class="wl-s">${REASON[l.reason][0].toUpperCase()+REASON[l.reason].slice(1)}</div></div>
+      <span class="wl-v">${r?(l.kg*r).toLocaleString()+" EGP":"no rate"}</span>
+      <button class="wl-b" onclick="editLine(${i})">&#9998;</button>
+      <button class="wl-b" onclick="delLine(${i})">&#10005;</button></div>`});
+  const t=wasteTotals();
+  b.innerHTML=h+`<div class="wtot"><span>${t.kg.toFixed(1)} kg waste in total</span>
+    <span>${t.egp?t.egp.toLocaleString()+" EGP"+(t.priced?"":" so far"):"value pending rates"}</span></div>`;
+}
+function addFb(){
+  if(!$("sel-fb").value){ $("sel-fb").focus(); return; }
+  const o={type:$("sel-fb").value, dish:$("i-fbdish").value.trim()||"Not about one dish",
+           note:$("i-fbnote").value.trim()};
+  if(S.fbIdx===null)S.fbs.push(o);else{S.fbs[S.fbIdx]=o;S.fbIdx=null}
+  $("i-fbnote").value="";$("i-fbdish").value="";$("sel-fb").value="";
+  resetBtn("btn-fb","+ Add comment");renderFb();
+}
+function editFb(i){const o=S.fbs[i];$("sel-fb").value=o.type;$("i-fbdish").value=(o.dish==="Not about one dish"?"":o.dish);$("i-fbnote").value=o.note;
+  S.fbIdx=i;setBtn("btn-fb","Update");renderFb()}
+function delFb(i){S.fbs.splice(i,1);
+  if(S.fbIdx===i){S.fbIdx=null;resetBtn("btn-fb","+ Add comment");$("i-fbnote").value=""}else if(S.fbIdx>i)S.fbIdx--;
+  renderFb()}
+function renderFb(){
+  const b=$("fblist");
+  if(!S.fbs.length){b.innerHTML=`<div class="wempty">No comments logged. Add one for each thing a guest raised about the food.</div>`;return}
+  let h="";
+  S.fbs.forEach((o,i)=>{const f=FB[o.type];
+    h+=`<div class="wline ${S.fbIdx===i?'sel':''}"><span class="bar" style="background:${f.c};height:26px"></span>
+      <div class="wl-main"><div class="wl-t">${f.t}</div>
+      <div class="wl-s">${esc(o.dish)}${o.note?" &middot; "+esc(o.note):""}</div></div>
+      <button class="wl-b" onclick="editFb(${i})">&#9998;</button>
+      <button class="wl-b" onclick="delFb(${i})">&#10005;</button></div>`});
+  const p=S.fbs.filter(o=>o.type==="great"||o.type==="good").length;
+  const avg=S.fbs.reduce((a,o)=>a+FB[o.type].n,0)/S.fbs.length;
+  b.innerHTML=h+`<div class="wtot"><span>${S.fbs.length} comment${S.fbs.length>1?"s":""} &middot; average ${avg.toFixed(1)} / 5</span>
+    <span>${p} positive &middot; ${S.fbs.length-p} to act on</span></div>`;
+}
+function addIss(){
+  const note=$("i-issnote").value.trim(); if(!note){$("i-issnote").focus();return}
+  const o={kind:$("sel-iss").value,imp:$("sel-imp").value,note,hrs:+$("i-isshrs").value||0};
+  if(S.issIdx===null)S.isss.push(o);else{S.isss[S.issIdx]=o;S.issIdx=null}
+  $("i-issnote").value="";$("sel-iss").value="";$("sel-imp").value="";$("i-isshrs").value="";
+  resetBtn("btn-iss","+ Add issue");renderIss();
+}
+function editIss(i){const o=S.isss[i];$("sel-iss").value=o.kind;$("sel-imp").value=o.imp;$("i-issnote").value=o.note;$("i-isshrs").value=o.hrs||"";
+  S.issIdx=i;setBtn("btn-iss","Update");renderIss()}
+function delIss(i){S.isss.splice(i,1);
+  if(S.issIdx===i){S.issIdx=null;resetBtn("btn-iss","+ Add issue");$("i-issnote").value=""}else if(S.issIdx>i)S.issIdx--;
+  renderIss()}
+function renderIss(){
+  const b=$("isslist");
+  if(!S.isss.length){b.innerHTML=`<div class="wempty">Nothing reported. Add each fault separately so it reaches the right person.</div>`;return}
+  let h="";
+  S.isss.forEach((o,i)=>{const m=IMP[o.imp];
+    h+=`<div class="wline ${S.issIdx===i?'sel':''}"><span class="bar" style="background:${m.c};height:26px"></span>
+      <div class="wl-main"><div class="wl-t">${ISS[o.kind].t} &middot; ${m.t}${o.hrs?" &middot; "+o.hrs+"h":""}</div>
+      <div class="wl-s">${esc(o.note)}</div></div>
+      <button class="wl-b" onclick="editIss(${i})">&#9998;</button>
+      <button class="wl-b" onclick="delIss(${i})">&#10005;</button></div>`});
+  const u=S.isss.filter(o=>o.imp==="stops").length;
+  const hrs=S.isss.reduce((a,o)=>a+(o.hrs||0),0);
+  b.innerHTML=h+`<div class="wtot"><span>${S.isss.length} open${hrs?" &middot; "+hrs+"h downtime":""}</span>
+    <span>${u?u+" stopping service":"none stopping service"}</span></div>`;
+}
+function add86(){
+  const item=$("i-86item").value.trim(), why=$("sel-86").value;
+  if(!item){ $("i-86item").focus(); return; }
+  if(!why){ $("sel-86").focus(); return; }
+  const o={item, why, note:$("i-86note").value.trim()};
+  if(S.e86Idx===null) S.e86.push(o); else { S.e86[S.e86Idx]=o; S.e86Idx=null; }
+  $("i-86item").value=""; $("i-86note").value=""; $("sel-86").value="";
+  resetBtn("btn-86","+ Add 86"); render86();
+}
+function edit86(i){
+  const o=S.e86[i];
+  $("i-86item").value=o.item; $("sel-86").value=o.why; $("i-86note").value=o.note;
+  S.e86Idx=i; setBtn("btn-86","Update"); render86();
+}
+function del86(i){
+  S.e86.splice(i,1);
+  if(S.e86Idx===i){ S.e86Idx=null; resetBtn("btn-86","+ Add 86");
+    $("i-86item").value=""; $("i-86note").value=""; $("sel-86").value=""; }
+  else if(S.e86Idx>i) S.e86Idx--;
+  render86();
+}
+function render86(){
+  const b=$("list86");
+  if(!S.e86.length){ b.innerHTML=`<div class="wempty">Nothing 86&rsquo;d. Add each item that came off the menu and why.</div>`; return; }
+  let h="";
+  S.e86.forEach((o,i)=>{ const r=R86[o.why]||R86.other;
+    h+=`<div class="wline ${S.e86Idx===i?'sel':''}"><span class="bar" style="background:${r.c};height:26px"></span>
+      <div class="wl-main"><div class="wl-t">${esc(o.item)}</div>
+      <div class="wl-s">${r.t}${o.note?" &middot; "+esc(o.note):""}</div></div>
+      <button class="wl-b" onclick="edit86(${i})">&#9998;</button>
+      <button class="wl-b" onclick="del86(${i})">&#10005;</button></div>`; });
+  const avoidable=S.e86.filter(o=>["not_ordered","no_stock","ran_out"].includes(o.why)).length;
+  b.innerHTML=h+`<div class="wtot"><span>${S.e86.length} item${S.e86.length>1?"s":""} off the menu</span>
+    <span>${avoidable? avoidable+" avoidable":"none avoidable"}</span></div>`;
+}
+
+function chips(id,key,cb){
+  document.querySelectorAll("#"+id+" .chip").forEach(c=>{
+    if(!c.dataset.v)return;
+    c.onclick=()=>{document.querySelectorAll("#"+id+" .chip").forEach(x=>x.classList.remove("on"));
+      c.classList.add("on");S[key]=c.dataset.v;if(cb)cb()}});
+}
+
+/* ---------- read / write the form ---------- */
+function readForm(){
+  return {covers:+$("i-covers").value||0, rev:+$("i-rev").value||0,
+    lines:JSON.parse(JSON.stringify(S.lines)), brig:brigade(),
+    temps:S.temps,
+    tUnit:$("sel-tunit").value, tRead:$("i-treading").value,
+    tAct:$("sel-taction").value, tNote:$("i-tnote").value.trim(),
+    dish:currentDish(), recipe:S.recipe, dev:$("sel-dev").value,
+    devNote:$("i-devnote").value.trim(), ticket:$("i-ticket").value,
+    fbs:JSON.parse(JSON.stringify(S.fbs)), isss:JSON.parse(JSON.stringify(S.isss)),
+    e86:JSON.parse(JSON.stringify(S.e86))};
+}
+function loadForm(d){
+  $("i-covers").value=d.covers; $("i-rev").value=d.rev;
+  S.lines=JSON.parse(JSON.stringify(d.lines)); S.editIdx=null; renderLines();
+  $("i-rostered").value=d.brig.r; $("i-vac").value=d.brig.v; $("i-abs").value=d.brig.a;
+  $("i-vacant").value=d.brig.vacant||""; $("i-critvac").value=d.brig.crit||""; absence();
+  setChip("c-temps","temps",d.temps);
+  $("tempbox").style.display = d.temps==="fail" ? "block" : "none";
+  $("sel-tunit").value=d.tUnit||"Walk-in chiller"; $("i-treading").value=d.tRead||"";
+  $("sel-taction").value=d.tAct||"discarded";      $("i-tnote").value=d.tNote||"";
+  setChip("c-recipe","recipe",d.recipe);
+  $("dev").style.display=d.recipe==="fail"?"block":"none";
+  $("sel-dev").value=d.dev; $("i-devnote").value=d.devNote||"";
+  const has=[...$("sel-dish").options].some(o=>o.value===d.dish);
+  $("sel-dish").value=has?d.dish:"__other";
+  $("i-dishother").value=has?"":d.dish; dishPick();
+  $("i-ticket").value=d.ticket||"";
+  S.fbs=JSON.parse(JSON.stringify(d.fbs)); S.fbIdx=null; renderFb();
+  S.isss=JSON.parse(JSON.stringify(d.isss)); S.issIdx=null; renderIss();
+  S.e86=JSON.parse(JSON.stringify(d.e86||[])); S.e86Idx=null; render86();
+}
+function setChip(id,key,val){
+  S[key]=val;
+  document.querySelectorAll("#"+id+" .chip").forEach(c=>c.classList.toggle("on",c.dataset.v===val));
+}
+function newLog(){
+  S.editingId=null; S.lines=[];S.editIdx=null;S.fbs=[];S.fbIdx=null;S.isss=[];S.issIdx=null;
+  S.e86=[];S.e86Idx=null;
+  $("i-covers").value="";$("i-rev").value="";$("i-wkg").value="";
+  $("i-rostered").value="";$("i-vac").value="";$("i-abs").value="";
+  $("i-vacant").value="";$("i-critvac").value="";
+  $("i-ticket").value="";$("i-devnote").value="";$("i-dishother").value="";
+  $("i-fbnote").value="";$("i-issnote").value="";$("i-fbdish").value="";
+  $("sel-fb").value="";$("sel-iss").value="";$("sel-imp").value="";
+  $("i-86item").value="";$("i-86note").value="";$("sel-86").value="";
+  setChip("c-temps","temps",""); setChip("c-recipe","recipe",""); $("dev").style.display="none";
+  $("tempbox").style.display="none"; $("i-treading").value=""; $("i-tnote").value="";
+  $("sel-tunit").value="Walk-in chiller"; $("sel-taction").value="discarded";
+  resetBtn("btn-add","+ Add waste");resetBtn("btn-fb","+ Add comment");
+  resetBtn("btn-iss","+ Add issue");resetBtn("btn-86","+ Add 86");
+  $("venuegroup").style.display=isExec(S.user)?"block":"none";
+  venueChips(); fillDishes(); absence(); renderLines(); renderFb(); renderIss(); render86(); coverage();
+  $("log-title").textContent="Daily kitchen log";
+  $("log-date").textContent=fmtDate(new Date());
+  $("editbanner").style.display="none";
+  $("btn-save").textContent="Save today’s report";
+  $("btn-cancel").style.display="none";
+  $("stamp").innerHTML=S.user?`Filed by ${esc(S.user.name)}${S.user.venue?" · "+S.user.venue+" kitchen":""}`:"";
+  $("flash").className="flash";
+}
+function cancelEdit(){newLog();setView("reports")}
+
+function saveLog(){
+  const d=readForm(), now=new Date();
+  /* Char genuinely has days with no covers. Zero is allowed — but it has to
+     be deliberate, not a field someone tabbed past. */
+  if(d.covers===0 || d.rev===0){
+    const what = (d.covers===0 && d.rev===0) ? "no covers and no food revenue"
+               : (d.covers===0 ? "no covers" : "no food revenue");
+    if(!confirm("This report has "+what+".\n\nIf the kitchen was closed or genuinely took nothing, that is fine — press OK.\n\nOtherwise press Cancel and fill the numbers in."))
+      return;
+  }
+  if(S.editingId){
+    const r=S.reports.find(x=>x.id===S.editingId);
+    const changes=diff(r.d,d);
+    if(changes.length){
+      /* keep the version that was replaced, never overwrite it */
+      r.versions=r.versions||[];
+      r.versions.unshift({d:r.d, by:S.user.name,
+        at:now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}), changes});
+      r.d=d; r.edited=`${S.user.name}, ${now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}`;
+      push({action:"save",report:r});
+    }
+    S.editingId=null; S.openId=r.id; newLog(); setView("reports"); return;
+  }
+  const dk=keyOf(now);
+  const dup=S.reports.find(r=>r.dateKey===dk&&r.venue===S.venue);
+  if(dup){ if(!confirm(`${S.venue} already has a report for ${fmtDate(now)}. Open it instead?`)) return;
+    S.openId=dup.id; setView("reports"); return; }
+  if(!S.checked[S.venue]) S.checked[S.venue]=[];
+  if(!S.checked[S.venue].includes(d.dish)) S.checked[S.venue].push(d.dish);
+  const r={id:"r"+(S.uid++),dateKey:dk,dateLabel:fmtDate(now),venue:S.venue,
+    who:S.user.name, time:now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),
+    status:"draft", d};
+  S.reports.unshift(r); S.openId=r.id;
+  push({action:"save",report:r});
+  const f=$("flash"); f.className="flash show";
+  f.innerHTML=`<b>Saved.</b> ${fmtDate(now)} &mdash; ${S.venue} is now under Daily summary report, where you can reopen and correct it.`
+    + (isExec(S.user)?" You can release it to the management dashboard from there.":" Chef Irfan releases it to management once reviewed.");
+  newLog(); setView("reports");
+}
+
+/* ---------- reports ---------- */
+const visible=()=>isExec(S.user)?S.reports:S.reports.filter(r=>r.venue===S.user.venue);
+
+/* what actually changed between two versions, in plain words */
+function diff(a,b){
+  const out=[], n=(l,x,y,u)=>{ if((x||0)!==(y||0)) out.push(`${l} ${x||0}${u||""} → ${y||0}${u||""}`) };
+  n("Covers",a.covers,b.covers);
+  n("Food revenue",money(a.rev),money(b.rev)," EGP");
+  const wa=wasteTotals(a.lines).kg, wb=wasteTotals(b.lines).kg;
+  if(wa.toFixed(1)!==wb.toFixed(1)) out.push(`Waste ${wa.toFixed(1)} kg → ${wb.toFixed(1)} kg`);
+  if(a.lines.length!==b.lines.length) out.push(`Waste entries ${a.lines.length} → ${b.lines.length}`);
+  n("Rostered",a.brig.r,b.brig.r); n("On vacation",a.brig.v,b.brig.v); n("Absent",a.brig.a,b.brig.a);
+  if((a.ticket||"")!==(b.ticket||"")) out.push(`Ticket time ${a.ticket||"—"} → ${b.ticket||"—"} min`);
+  if(a.temps!==b.temps) out.push(`Temperatures ${a.temps==="pass"?"in range":"out of range"} → ${b.temps==="pass"?"in range":"out of range"}`);
+  if(a.dish!==b.dish) out.push(`Dish checked ${a.dish} → ${b.dish}`);
+  const rs=x=>x.recipe==="pass"?"matched spec":DEV[x.dev].t;
+  if(rs(a)!==rs(b)) out.push(`Recipe check ${rs(a)} → ${rs(b)}`);
+  if(a.fbs.length!==b.fbs.length) out.push(`Guest comments ${a.fbs.length} → ${b.fbs.length}`);
+  if(a.isss.length!==b.isss.length) out.push(`Issues reported ${a.isss.length} → ${b.isss.length}`);
+  return out;
+}
+function renderReports(){
+  const list=visible();
+  $("rpt-scope").textContent=isExec(S.user)?"All kitchens":S.user.venue+" kitchen";
+  $("rpt-count").innerHTML=list.length
+    ? `${list.length} report${list.length>1?"s":""}<br>${list.filter(r=>r.status==="released").length} released to management`
+    : "";
+  if(!list.length){
+    $("rpt-list").innerHTML=`<div class="empty">No reports yet.<br>Fill in the daily log and save it &mdash; it will appear here as a dated report you can reopen and edit.</div>`;
+    return;
+  }
+  $("rpt-list").innerHTML=list.map(r=>{
+    const rel=r.status==="released";
+    const canEdit = isExec(S.user) || !rel;
+    return `<div class="rpt">
+      <div><div class="rpt-d">${r.dateLabel}</div>
+        <div class="rpt-m">${r.venue} &middot; filed by ${esc(r.who)} at ${r.time}${r.edited?` &middot; corrected ${esc(r.edited)}`:""}</div></div>
+      ${r.versions&&r.versions.length?`<span class="badge" style="background:${C.mute}">${r.versions.length} correction${r.versions.length>1?"s":""}</span>`:""}
+      <div class="rpt-sp"></div>
+      <span class="badge" style="background:${rel?C.green:C.brass}">${rel?"Released":"Draft"}</span>
+      <button class="btn ghost sm" onclick="toggleOpen('${r.id}')">${S.openId===r.id?"Close":"Open"}</button>
+      ${canEdit?`<button class="btn ghost sm" onclick="editReport('${r.id}')">Edit</button>`:""}
+      ${isExec(S.user)?(rel
+        ? `<button class="btn ghost sm" onclick="unrelease('${r.id}')">Unrelease</button>`
+        : `<button class="btn dark sm" onclick="release('${r.id}')">Submit to dashboard</button>`):""}
+    </div>${S.openId===r.id?detail(r):""}`;
+  }).join("");
+}
+function toggleOpen(id){S.openId=S.openId===id?null:id;renderReports()}
+function detail(r){
+  const d=r.d, w=wasteTotals(d.lines), b=d.brig;
+  const kv=(l,v)=>`<div class="dg">${l}<b>${v}</b></div>`;
+  let h=`<div class="detail"><div class="dsec"><h4>Service</h4><div class="dgrid">
+    ${kv("Covers",d.covers)}${kv("Food revenue",money(d.rev)+" EGP")}
+    ${kv("On the floor",b.floor+" of "+b.r)}${kv("Ticket time",d.ticket?d.ticket+" min":"—")}</div></div>`;
+  h+=`<div class="dsec"><h4>Waste</h4>`;
+  h+= d.lines.length
+    ? d.lines.map(l=>`<div class="dl"><b>${l.kg} kg</b> · ${CATN[l.cat]} · ${REASON[l.reason]}</div>`).join("")
+      +`<div class="dl" style="margin-top:6px"><b>${w.kg.toFixed(1)} kg waste in total</b>${w.egp?" · "+w.egp.toLocaleString()+" EGP":""}</div>`
+    : `<div class="dl">None logged.</div>`;
+  h+=`</div>`;
+  h+=`<div class="dsec"><h4>Checks</h4>
+    <div class="dl">Temperatures — <b>${d.temps===""?"not checked":(d.temps==="pass"?"all in range":"OUT OF RANGE")}</b>${
+      d.temps==="fail"
+        ? ` · ${esc(d.tUnit||"unit")}${d.tRead!==""&&d.tRead!==undefined?" at <b>"+esc(d.tRead)+"&deg;C</b>":""}`
+          + ` · ${(TACT[d.tAct]||TACT.discarded).t}${d.tNote?" — "+esc(d.tNote):""}`
+        : ""}</div>
+    <div class="dl">Recipe spot-check — ${d.recipe===""||!d.dish?"<b>not done</b>":
+      `<b>${esc(d.dish)}</b>: ${d.recipe==="pass"?"matched spec":DEV[d.dev].t}${d.devNote?" — "+esc(d.devNote):""}`}</div>
+    <div class="dl">Brigade — rostered ${b.r}, vacation ${b.v}, absent ${b.a}</div></div>`;
+  h+=`<div class="dsec"><h4>Guest feedback</h4>`;
+  h+= d.fbs.length? d.fbs.map(o=>`<div class="dl"><b>${FB[o.type].t}</b> · ${esc(o.dish)}${o.note?" — "+esc(o.note):""}</div>`).join("")
+                  : `<div class="dl">Nothing raised.</div>`;
+  h+=`</div><div class="dsec"><h4>Items 86&rsquo;d</h4>`;
+  h+= (d.e86&&d.e86.length)
+    ? d.e86.map(o=>`<div class="dl"><b>${esc(o.item)}</b> — ${(R86[o.why]||R86.other).t}${o.note?" · "+esc(o.note):""}</div>`).join("")
+    : `<div class="dl">Nothing off the menu.</div>`;
+  h+=`</div><div class="dsec"><h4>Equipment &amp; suppliers</h4>`;
+  h+= d.isss.length? d.isss.map(o=>`<div class="dl"><b>${ISS[o.kind].t}</b> · ${IMP[o.imp].t} — ${esc(o.note)}</div>`).join("")
+                   : `<div class="dl">Nothing reported.</div>`;
+  h+=`</div>`;
+  if(r.versions&&r.versions.length){
+    h+=`<div class="dsec"><h4>Corrections &mdash; ${r.versions.length} earlier version${r.versions.length>1?"s":""} kept</h4>`;
+    r.versions.forEach((vn,i)=>{
+      h+=`<div class="vrow"><div class="vmeta">Corrected by <b>${esc(vn.by)}</b> at ${vn.at}
+        ${i===0?`<span class="vtag">most recent</span>`:""}</div>`;
+      h+=vn.changes.map(c=>`<div class="vchg">${esc(c)}</div>`).join("");
+      h+=`</div>`;
+    });
+    h+=`<div class="hint" style="margin-top:9px">Nothing is overwritten. Every earlier version is kept against the report.</div></div>`;
+  }
+  return h+`</div>`;
+}
+function editReport(id){
+  const r=S.reports.find(x=>x.id===id);
+  S.editingId=id; S.venue=r.venue; venueChips(); fillDishes(); loadForm(r.d);
+  $("log-title").textContent="Editing report";
+  $("log-date").textContent=r.dateLabel+" · "+r.venue;
+  $("editbanner").style.display="block";
+  $("editbanner").innerHTML=`Editing the report for <b>${r.dateLabel}</b> at ${r.venue}, originally filed by ${esc(r.who)} at ${r.time}. Saving records that it was corrected.`;
+  $("btn-save").textContent="Save changes";
+  $("btn-cancel").style.display="block";
+  setView("log");
+}
+function release(id){
+  const r=S.reports.find(x=>x.id===id);
+  r.status="released"; r.releasedBy=S.user.name;
+  push({action:"status",id:r.id,status:"released",by:S.user.name});
+  renderReports(); applyReports();
+}
+function unrelease(id){
+  const r=S.reports.find(x=>x.id===id);
+  r.status="draft"; r.releasedBy="";
+  push({action:"status",id:r.id,status:"draft",by:""});
+  renderReports(); applyReports();
+}
+
+/* ---------- dashboard ---------- */
+function baseKpis(){return[
+ {g:"ok",n:"Food cost",s:"against 33% target, H1 2026",char:"30%",barten:"25%"},
+ {g:"ok",n:"Waste as % of food cost",s:"June actuals, from the cost reconciliation",char:"0.3%",barten:"0.1%"},
+ {g:"none",n:"Waste by weight",s:"starts when reports are released",char:"",barten:"",grey:true},
+ {g:"ok",n:"Purchasing compliance",s:"ordered against approved suppliers",char:"98%",barten:"99.7%"},
+ {g:"watch",n:"Kitchen audit score",s:"TÜV NORD, latest visit",char:"87%",barten:"76%"},
+ {g:"watch",n:"Stock holding",s:"days of inventory held",char:"55 days",barten:"13 days"},
+ {g:"watch",n:"Guest food feedback",s:"praise on flavour, concerns on consistency",char:"—",barten:"—",grey:true},
+ {g:"bad",n:"Corrective actions closed",s:"raised at audit, closed in the system",char:"0 of 50",barten:"0 of 71"},
+ {g:"bad",n:"Kitchen headcount",s:"chefs and stewards",char:"9, from 17",barten:"not reported"},
+ {g:"bad",n:"Vacancies unfilled",s:"open roles carried since May",char:"8",barten:"not reported"},
+ {g:"none",n:"Unplanned absence",s:"starts when reports are released — vacation excluded",char:"",barten:"",grey:true},
+ {g:"none",n:"Recipe compliance",s:"starts when reports are released",char:"",barten:"",grey:true},
+ {g:"none",n:"Items 86’d",s:"items off the menu, and how many were avoidable",char:"",barten:"",grey:true},
+ {g:"none",n:"Food quality &amp; consistency",s:"measurement starts this month",char:"",barten:"",grey:true},
+ {g:"none",n:"Turnover &amp; training completed",s:"measurement starts this month",char:"",barten:"",grey:true},
+ {g:"none",n:"Inventory variance",s:"measurement starts this month",char:"",barten:"",grey:true},
+ {g:"none",n:"Equipment status &amp; supplier issues",s:"starts when reports are released",char:"",barten:"",grey:true},
+ {g:"none",n:"Ticket times",s:"blocked — needs KDS/POS access from Operations",char:"",barten:"",grey:true}
+]}
+const ACTIONS=[
+ ["121 corrective actions open across both kitchens","Close out and evidence every action in the TÜV system, oldest first","Chef Irfan Malek","31 Aug","In progress",C.brass],
+ ["Char down to 9 chefs and stewards from 17","Recruitment brief issued; cross-venue cover agreed with Barten in the interim","Chef Irfan Malek","15 Aug","In progress",C.brass],
+ ["Ticket times not measured","KDS or POS reporting access requested from Operations","Operations","Awaiting","Blocked",C.red],
+ ["Waste log not standardised","Single logging method across both kitchens, entered daily","Sous chefs","08 Aug","Open",C.mute],
+ ["Char holding 55 days of stock","Par levels reset and slow-moving lines run down before reordering","Chef Irfan Malek","31 Aug","In progress",C.brass],
+ ["Training and appraisals untracked","Training matrix built per section with review dates","Chef Irfan Malek","30 Sep","Open",C.mute]
+];
+let KPI=baseKpis(), EXTRA=[];
+function applyReports(){
+  KPI=baseKpis(); EXTRA=[];
+  const rel=S.reports.filter(r=>r.status==="released");
+  const latest={};
+  rel.forEach(r=>{ if(!latest[r.venue]||r.dateKey>latest[r.venue].dateKey) latest[r.venue]=r; });
+  Object.values(latest).forEach(r=>{
+    const key=r.venue.toLowerCase(), v=r.venue, d=r.d, w=wasteTotals(d.lines), b=d.brig;
+    const set=(n,val,sub,g)=>{const row=KPI.find(x=>x.n===n);if(!row)return;
+      row[key]=val;row.grey=false;if(sub)row.s=sub;if(g)row.g=g};
+
+    if(w.kg>0){
+      const by={}; d.lines.forEach(l=>by[l.reason]=(by[l.reason]||0)+l.kg);
+      const causes=Object.keys(by).filter(x=>x!=="trim").sort((a,c)=>by[c]-by[a]);
+      set("Waste by weight",w.kg.toFixed(1)+" kg",
+        (causes.length?"largest cause "+REASON[causes[0]]:"all trim")+", from the released report",
+        causes.length===0?"ok":(w.kg<=5?"ok":(w.kg<=15?"watch":"bad")));
+      causes.forEach(x=>EXTRA.push([`${v} waste — ${by[x].toFixed(1)} kg from ${REASON[x]}`,
+        FIX[x], ownerName(OWNER[x],v), "This week","Open",C.brass]));
+      if(w.egp>0&&d.rev>0){const p=w.egp/d.rev*100;
+        set("Waste as % of food cost",p.toFixed(2)+"%","estimated from weight at your category rate",
+          p<=1?"ok":(p<=2?"watch":"bad"));}
+    }
+    if(d.ticket!=="")
+      set("Ticket times",(+d.ticket)+" min","from the released report",
+        +d.ticket<=18?"ok":(+d.ticket<=25?"watch":"bad"));
+    if(d.recipe==="" || !d.dish){ /* no spot-check filed — leave the KPI as not measured */ }
+    else if(d.recipe==="pass") set("Recipe compliance","Matched spec",`${d.dish} spot-checked`,"ok");
+    else{const x=DEV[d.dev];
+      set("Recipe compliance","Deviation",`${d.dish} — ${x.t}`,"bad");
+      EXTRA.push([`${v} — ${d.dish}: ${x.t}`, d.devNote||x.fix, ownerName(x.own,v),"Next service","Open",x.red?C.red:C.brass]);
+      if(d.dev==="portion") EXTRA.push([`${v} portion control — possible cost impact`,
+        "Re-check portion weights across the section for one week against theoretical food cost",
+        "Chef Irfan Malek","This week","Open",C.red]);}
+    if(d.temps==="fail"){
+      const ta=TACT[d.tAct]||TACT.discarded;
+      EXTRA.push([
+        `${v} — ${d.tUnit||"unit"} out of range${d.tRead!==""&&d.tRead!==undefined?" at "+d.tRead+"°C":""}`,
+        (d.tNote? d.tNote+" — " : "") + ta.fix,
+        chefName(v), "Today", "Open", ta.c]);
+    }
+    if(b.r){
+      set("Kitchen headcount",b.floor+" of "+b.r,"on the floor against full brigade, from the released report");
+      set("Unplanned absence",(b.a/b.r*100).toFixed(0)+"%","from the released report",
+        b.a===0?"ok":(b.a/b.r<0.2?"watch":"bad"));
+      if(b.a>0) EXTRA.push([`${v} ran ${b.a} short through unplanned absence`,
+        "Cover arranged; reason recorded against the individual and reviewed if it repeats",
+        chefName(v),"Today",b.a/b.r>=0.2?"Open":"Logged",b.a/b.r>=0.2?C.red:C.brass]);
+    }
+    if(d.fbs.length){
+      const p=d.fbs.filter(o=>o.type==="praise").length;
+      set("Guest food feedback",`${p} praise, ${d.fbs.length-p} to act on`,"logged per comment, by dish",
+        (d.fbs.length-p)===0?"ok":((d.fbs.length-p)<=2?"watch":"bad"));
+      d.fbs.filter(o=>FB[o.type].act).forEach(o=>{const f=FB[o.type];
+        EXTRA.push([`${v} — ${f.t.toLowerCase()}${o.dish!=="General"?": "+o.dish:""}`,
+          o.note||f.fix, ownerName(f.own,v),"This week","Open",f.c])});
+    }
+    if(d.e86 && d.e86.length){
+      const avoidable=d.e86.filter(o=>["not_ordered","no_stock","ran_out"].includes(o.why)).length;
+      set("Items 86’d", d.e86.length+" off menu",
+        avoidable? avoidable+" avoidable — ordering or prep" : "none avoidable",
+        avoidable? "bad" : "watch");
+      d.e86.forEach(o=>{ const r=R86[o.why]||R86.other;
+        EXTRA.push([`${v} — ${o.item} 86’d, ${r.t}`, o.note||r.fix,
+          ownerName(r.own,v), r.c===C.red?"Today":"This week", "Open", r.c]); });
+    }
+    if(d.isss.length){
+      const st=d.isss.filter(o=>o.imp==="stops").length;
+      set("Equipment status &amp; supplier issues",d.isss.length+" open",
+        st?st+" stopping service":"none stopping service", st?"bad":"watch");
+      d.isss.forEach(o=>{const m=IMP[o.imp];
+        EXTRA.push([`${v} — ${ISS[o.kind].t.toLowerCase()} issue, ${m.t}`,o.note,ISS[o.kind].own,m.dl,"Open",m.c])});
+    }
+  });
+  const names=Object.values(latest).map(r=>`${r.venue} — ${r.dateLabel}, released by ${r.releasedBy||"—"}`);
+  $("live-note").innerHTML = names.length? names.join("<br>") : "No reports released yet";
+}
+const BANDS=[["ok","On track",C.green],["watch","Watch",C.brass],
+  ["bad","Needs management attention",C.red],["none","Measurement starts this month",C.mute]];
+function renderDash(){
+  const box=$("bands"); box.innerHTML="";
+  BANDS.forEach(([k,t,c])=>{
+    const rows=KPI.filter(r=>r.g===k); if(!rows.length)return;
+    let h=`<div class="band"><div class="band-h"><span class="dot" style="background:${c}"></span>
+      <span class="band-t" style="color:${c}">${t}</span>
+      <span class="band-n">${rows.length} indicator${rows.length>1?"s":""}</span></div><div class="kpis">`;
+    rows.forEach(r=>{
+      const val=v=>(r.grey||!v)?`<span class="kgrey">${v||"not yet measured"}</span>`:v;
+      h+=`<div class="kpi"><span class="bar" style="background:${c}"></span>
+        <span class="kname">${r.n}<small>${r.s}</small></span>
+        <span class="kval"><small>Char</small>${val(r.char)}</span>
+        <span class="kval"><small>Barten</small>${val(r.barten)}</span></div>`;
+    });
+    box.innerHTML+=h+"</div></div>";
+  });
+  $("read").innerHTML=`<b>The one-line read.</b> Both kitchens are buying and costing well &mdash; food cost, waste and purchasing compliance are all inside target, and Barten is running the tighter operation. The problems are people and follow-through, not margin: Char has lost eight of seventeen brigade since January with no replacements, and not one of the 121 audit actions raised across both kitchens has been closed out in the system, even where the work was done on the floor. Everything below the line starts reporting as soon as the daily reports are released.`;
+  const tb=$("ap-body"); tb.innerHTML="";
+  EXTRA.concat(ACTIONS).forEach(a=>{
+    tb.innerHTML+=`<tr><td><b>${a[0]}</b></td><td>${a[1]}</td><td>${a[2]}</td><td>${a[3]}</td>
+      <td><span class="pill" style="background:${a[5]}">${a[4]}</span></td></tr>`;});
+}
+
+
+/* ================= MONTHLY CLOSE =================
+   The scorecard KPIs, their weights and targets, exactly as the Excel
+   defines them. Scoring below reproduces the workbook's own tiers so the
+   two always agree. */
+const TARGETS={
+  Char:  {rating:4.5, actualFC:27.4, wastePct:1.5, ticket:12, critVac:0, critFind:0, stockVar:1.5, trainPct:100},
+  Barten:{rating:4.5, actualFC:27.5, wastePct:1.5, ticket:12, critVac:0, critFind:0, stockVar:1.5, trainPct:100}
+};
+const KPIS=[
+ {area:"Food Quality",f:"rating",   kpi:"Guest food rating / feedback",          wt:15,dir:"Higher",unit:"rating"},
+ {area:"Cost",        f:"actualFC", kpi:"Actual vs theoretical food cost",       wt:25,dir:"Lower", unit:"%"},
+ {area:"Waste",       f:"wastePct", kpi:"Waste value as % of purchases",         wt:10,dir:"Lower", unit:"%"},
+ {area:"Operations",  f:"ticket",   kpi:"Average ticket time",                   wt:8, dir:"Lower", unit:"min"},
+ {area:"People",      f:"critVac",  kpi:"Critical kitchen vacancies",            wt:10,dir:"Lower", unit:"count"},
+ {area:"Compliance",  f:"critFind", kpi:"Critical HACCP / hygiene findings",     wt:15,dir:"Lower", unit:"count"},
+ {area:"Inventory",   f:"stockVar", kpi:"Stock variance (absolute)",             wt:8, dir:"Lower", unit:"%"},
+ {area:"Training",    f:"trainPct", kpi:"Mandatory / skills training completion",wt:9, dir:"Higher",unit:"%"}
+];
+const ADV=[
+ {area:"Equipment",f:"eqFail",   kpi:"Critical equipment downtime",              unit:"count"},
+ {area:"Suppliers",f:"supIssues",kpi:"Major supplier quality / availability",    unit:"count"}
+];
+/* the Excel's own tiers — do not "improve" these or the two stop agreeing */
+function achv(area,unit,dir,F,G){
+  if(area==="Cost")      return G<=F?1.2:(G-F<=2?0.9:(G-F<=4?0.7:0.4));
+  if(area==="Inventory") return G<=F?1.2:(G-F<=0.5?0.9:(G-F<=1.5?0.7:0.4));
+  if(unit==="count")     return G===0?1.2:(G===1?0.9:(G===2?0.6:0.3));
+  if(dir==="Higher")     return F? Math.min(G/F,1.2):0;
+  return G===0?1.2:Math.min(F/G,1.2);
+}
+const bandOf=x=>x>=105?"Exceptional":x>=95?"Excellent":x>=85?"Strong":x>=75?"Acceptable":"Needs Improvement";
+const ragOf =a=>a>=1?["GREEN",C.green]:a>=0.85?["AMBER",C.brass]:["RED",C.red];
+
+/* what the department figures are, grouped by who owes them */
+const MFIELDS=[
+ ["Finance / Cost Control",[
+   ["theoFC","Theoretical food cost","%"],
+   ["actualFC","Actual food cost","%"],
+   ["purchases","Total food purchases","EGP"],
+   ["wasteValue","Waste value","EGP"],
+   ["stockVar","Stock variance, absolute","%"]]],
+ ["Human Resources",[
+   ["establishment","Approved establishment","count"],
+   ["headcount","Actual headcount, month end","count"],
+   ["critVac","Critical vacancies","count"],
+   ["leavers","Leavers","count"],
+   ["turnover","Turnover","%"],
+   ["trainPct","Training completion","%"]]],
+ ["Operations",[
+   ["ticket","Average ticket time","min"]]],
+ ["QA / Food Safety",[
+   ["auditScore","Audit score","%"],
+   ["critFind","Critical findings","count"],
+   ["majFind","Major findings","count"],
+   ["carsOpen","Corrective actions open at month end","count"],
+   ["carsClosed","Corrective actions closed in month","count"],
+   ["unresolvedBreach","Unresolved critical breach — 1 = yes, 0 = no","0/1"]]],
+ ["Marketing / Guest Relations",[
+   ["rating","Food-only guest rating","/5"],
+   ["ratingN","Number of ratings","count"]]],
+ ["Advisory — Maintenance & Purchasing",[
+   ["eqFail","Critical equipment failures","count"],
+   ["eqHours","Equipment downtime","hours"],
+   ["supIssues","Supplier quality / availability issues","count"]]]
+];
+
+const mKey=()=>`${S.mVenue}|${$("m-month").value}`;
+
+/* everything the daily logs already know about that month */
+function fromLogs(){
+  const mk=$("m-month").value;
+  const rs=S.reports.filter(r=>r.venue===S.mVenue && r.dateKey.slice(0,7)===mk);
+  if(!rs.length) return null;
+  let kg=0,covers=0,rev=0,tick=[],rate=[],e86=0,temps=0,absSum=0,absN=0,dev=0,checks=0,eqh=0,sup=0;
+  rs.forEach(r=>{const d=r.d;
+    (d.lines||[]).forEach(l=>kg+=l.kg);
+    covers+=d.covers||0; rev+=d.rev||0;
+    if(d.ticket!=="" && d.ticket!=null) tick.push(+d.ticket);
+    (d.fbs||[]).forEach(o=>{ if(FB[o.type]) rate.push(FB[o.type].n); });
+    e86+=(d.e86||[]).length;
+    if(d.temps==="fail") temps++;
+    if(d.brig && d.brig.r){ absSum+=d.brig.a/d.brig.r; absN++; }
+    if(d.recipe){ checks++; if(d.recipe==="fail") dev++; }
+    (d.isss||[]).forEach(o=>{ eqh+=o.hrs||0; if(o.kind==="supplier") sup++; });
+  });
+  const avg=a=>a.length? a.reduce((x,y)=>x+y,0)/a.length : null;
+  return {n:rs.length, kg, covers, rev,
+    ticket:avg(tick), rating:avg(rate), e86, temps, dev, checks,
+    absence:absN? absSum/absN*100 : null, eqHours:eqh, supIssues:sup};
+}
+
+function initMonth(){
+  if(!$("m-month").value){
+    const d=new Date(); d.setMonth(d.getMonth()-1);       /* default to last month */
+    $("m-month").value=d.toISOString().slice(0,7);
+  }
+  if(!S.mVenue) S.mVenue=S.outlets[0];
+  $("m-venue").innerHTML=S.outlets.map(o=>
+    `<div class="chip ${S.mVenue===o?'on':''}" onclick="S.mVenue='${o}';initMonth()">${o}</div>`).join("");
+  loadMonth();
+}
+
+function loadMonth(){
+  const m=S.monthly[mKey()]||{}, L=fromLogs();
+  let h="";
+  MFIELDS.forEach(([group,fields])=>{
+    h+=`<div class="panel" style="padding:18px 20px;margin-bottom:14px">
+        <h3 style="font-size:17px;margin-bottom:12px">${group}</h3>
+        <table class="adm" style="margin:0"><thead><tr>
+          <th style="width:44%">Figure</th><th style="width:10%">Unit</th>
+          <th style="width:20%">Enter</th><th style="width:26%">Your logs say</th></tr></thead><tbody>`;
+    fields.forEach(([f,label,unit])=>{
+      let cmp="—";
+      if(L){
+        if(f==="ticket"   && L.ticket!=null) cmp=L.ticket.toFixed(1)+" min average";
+        if(f==="rating"   && L.rating!=null) cmp=L.rating.toFixed(1)+" / 5 from "+L.n+" log"+(L.n>1?"s":"");
+        if(f==="wasteValue")                 cmp=L.kg.toFixed(1)+" kg logged";
+        if(f==="eqHours")                    cmp=L.eqHours?L.eqHours+" h logged":"none logged";
+        if(f==="supIssues")                  cmp=L.supIssues+" logged";
+        if(f==="critFind" && L.temps)        cmp=L.temps+" temperature excursion"+(L.temps>1?"s":"");
+        if(f==="critVac"  && L.absence!=null)cmp="absence "+L.absence.toFixed(0)+"%";
+      }
+      h+=`<tr><td><b>${label}</b></td><td>${unit}</td>
+        <td><input type="number" step="0.01" id="mf-${f}" value="${m[f]!=null?m[f]:""}"
+             placeholder="0" oninput="scoreMonth()" style="background:#FFF3C4"></td>
+        <td><span class="hint" style="margin:0">${cmp}</span></td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  });
+  $("m-form").innerHTML=h;
+  $("m-saved").textContent = S.monthly[mKey()] ? "Saved" : "Not yet saved";
+  scoreMonth();
+}
+
+function readMonth(){
+  const o={};
+  MFIELDS.forEach(([,fs])=>fs.forEach(([f])=>{
+    const el=$("mf-"+f); if(el && el.value!=="") o[f]=+el.value;
+  }));
+  /* waste % is derived, never typed twice */
+  if(o.wasteValue!=null && o.purchases) o.wastePct=+(o.wasteValue/o.purchases*100).toFixed(2);
+  return o;
+}
+
+function scoreMonth(){
+  const m=readMonth(), T=TARGETS[S.mVenue]||TARGETS.Char;
+  let total=0, missing=0;
+  let h=`<table class="ap"><thead><tr>
+    <th style="width:26%">KPI</th><th style="width:7%">Weight</th><th style="width:10%">Target</th>
+    <th style="width:10%">Actual</th><th style="width:12%">Achievement</th>
+    <th style="width:12%">Weighted</th><th style="width:11%">Status</th></tr></thead><tbody>`;
+  KPIS.forEach(k=>{
+    const F=T[k.f], G=m[k.f];
+    if(G==null){
+      missing++;
+      h+=`<tr><td><b>${k.kpi}</b></td><td>${k.wt}%</td><td>${F}</td>
+        <td colspan="3"><span class="kgrey">not yet provided</span></td>
+        <td><span class="pill" style="background:${C.mute}">WAITING</span></td></tr>`;
+      return;
+    }
+    const a=achv(k.area,k.unit,k.dir,F,G), sc=a*k.wt, [lab,col]=ragOf(a);
+    total+=sc;
+    h+=`<tr><td><b>${k.kpi}</b></td><td>${k.wt}%</td><td>${F}</td><td><b>${G}</b></td>
+      <td>${(a*100).toFixed(1)}%</td><td>${sc.toFixed(2)}</td>
+      <td><span class="pill" style="background:${col}">${lab}</span></td></tr>`;
+  });
+  h+=`</tbody></table>`;
+
+  h+=`<div class="read" style="margin:22px 0 10px">`;
+  if(missing){
+    h+=`<b>${missing} of ${KPIS.length} KPIs still waiting on a department.</b> `+
+       `The score below counts only what has been provided, so treat it as incomplete until every line is filled. `+
+       `Running total <b>${total.toFixed(1)}</b> of ${KPIS.reduce((a,k)=>a+k.wt,0)-KPIS.filter(k=>m[k.f]==null).reduce((a,k)=>a+k.wt,0)} available points.`;
+  }else{
+    h+=`<b>Overall direct score ${total.toFixed(2)} — ${bandOf(total)}.</b> `+
+       `Every KPI provided and scored on the same tiers as the workbook.`;
+  }
+  h+=`</div>`;
+
+  /* advisory: shown, never scored */
+  h+=`<div class="eyebrow" style="margin-top:26px">Advisory — tracked, not scored</div><table class="ap"><tbody>`;
+  ADV.forEach(k=>{
+    const G=m[k.f];
+    h+=`<tr><td style="width:52%"><b>${k.kpi}</b></td><td>target 0</td>
+      <td>${G==null?'<span class="kgrey">not provided</span>':'<b>'+G+'</b>'}</td>
+      <td>${G==null?"":'<span class="pill" style="background:'+(G>0?C.brass:C.green)+'">'+(G>0?"ATTENTION":"CLEAR")+'</span>'}</td></tr>`;
+  });
+  h+=`</tbody></table>`;
+  $("m-score").innerHTML=h;
+  renderExport();
+}
+
+/* Scorecard cell map. Rows 11-18 are the scored KPIs, 32-33 advisory. */
+const CELLS={rating:"G11",actualFC:"G12",wastePct:"G13",ticket:"G14",
+             critVac:"G15",critFind:"G16",stockVar:"G17",trainPct:"G18",
+             eqFail:"G32",supIssues:"G33"};
+
+function renderExport(){
+  const m=readMonth(), L=fromLogs(), box=$("m-export");
+  const direct=KPIS.map(k=>({f:k.f,label:k.kpi,cell:CELLS[k.f],v:m[k.f]}));
+  const adv=ADV.map(k=>({f:k.f,label:k.kpi,cell:CELLS[k.f],v:m[k.f]}));
+  const miss=direct.filter(x=>x.v==null).length;
+
+  let h=`<div class="panel" style="padding:20px 22px">
+    <h3 style="font-size:17px">${S.mVenue} Kitchen &middot; ${$("m-month").value}</h3>
+    <div class="ps">Open the <b>${S.mVenue} Kitchen</b> sheet in the scorecard workbook and paste into <b>G11</b>.</div>`;
+
+  h+=`<table class="adm" style="margin-bottom:14px"><thead><tr>
+      <th style="width:8%">Cell</th><th style="width:52%">KPI</th><th style="width:20%">Value</th></tr></thead><tbody>`;
+  direct.forEach(x=>{
+    h+=`<tr><td><b>${x.cell}</b></td><td>${x.label}</td>
+        <td>${x.v==null?'<span class="kgrey">waiting</span>':'<b>'+x.v+'</b>'}</td></tr>`;
+  });
+  h+=`</tbody></table>`;
+
+  if(miss){
+    h+=`<div class="hint"><b>${miss} figure${miss>1?"s":""} still missing.</b> Pasting now would leave gaps in the sheet. The box below uses a blank for anything not yet provided, so existing cells are not overwritten with zeros.</div>`;
+  }
+  h+=`<span class="sub">Direct KPIs &mdash; paste into G11</span>
+      <textarea class="exp" onclick="this.select()" readonly>${
+        direct.map(x=>x.v==null?"":x.v).join("\n")}</textarea>`;
+  h+=`<span class="sub" style="margin-top:12px">Advisory &mdash; paste into G32</span>
+      <textarea class="exp" style="height:52px" onclick="this.select()" readonly>${
+        adv.map(x=>x.v==null?"":x.v).join("\n")}</textarea>`;
+
+  /* the full picture, for the record and for cross-checking */
+  const rows=[["Venue",S.mVenue],["Month",$("m-month").value]];
+  MFIELDS.forEach(([g,fs])=>fs.forEach(([f,label,unit])=>
+    rows.push([label+(unit?" ("+unit+")":""), m[f]!=null?m[f]:"NOT PROVIDED"])));
+  if(L){
+    rows.push(["— from your daily logs —",""]);
+    rows.push(["Reports filed",L.n]);
+    rows.push(["Waste logged (kg)",L.kg.toFixed(1)]);
+    rows.push(["Covers",L.covers]);
+    rows.push(["Food revenue logged (EGP)",L.rev.toFixed(2)]);
+    rows.push(["Ticket time, log average (min)",L.ticket!=null?L.ticket.toFixed(1):"not measured"]);
+    rows.push(["Guest rating, log average (/5)",L.rating!=null?L.rating.toFixed(2):"none logged"]);
+    rows.push(["Items 86'd",L.e86]);
+    rows.push(["Temperature excursions",L.temps]);
+    rows.push(["Recipe checks done",L.checks]);
+    rows.push(["Recipe deviations",L.dev]);
+    rows.push(["Unplanned absence (%)",L.absence!=null?L.absence.toFixed(1):"not logged"]);
+    rows.push(["Equipment downtime (h)",L.eqHours]);
+  }
+  h+=`<span class="sub" style="margin-top:12px">Full month record &mdash; department figures and what your logs showed</span>
+      <textarea class="exp" style="height:150px" onclick="this.select()" readonly>${
+        rows.map(r=>r.join("\t")).join("\n")}</textarea>
+      <div class="hint">Tab separated. Paste into a blank sheet and it lands in two columns.</div>`;
+  h+=`</div>`;
+  box.innerHTML=h;
+}
+
+function saveMonth(){
+  S.monthly[mKey()]=readMonth();
+  push({action:"month",key:mKey(),venue:S.mVenue,month:$("m-month").value,data:S.monthly[mKey()]});
+  $("m-saved").textContent="Saved";
+  scoreMonth();
+}
+
+
+/* ================= SCORECARD, GATES, SIGN-OFF ================= */
+const SIGNERS=[["radwan","Reviewed by (Radwan)"],["fareed","Reviewed by (Fareed)"],["owner","Final approval (Owner)"]];
+const SSTATE=["Pending","Approved","Queried"];
+const BONUS=[[105,1.2,"Exceptional"],[95,1.0,"Excellent"],[85,0.75,"Strong"],[75,0.5,"Acceptable"],[0,0,"Needs Improvement"]];
+const multOf=x=>{for(const[t,m]of BONUS) if(x>=t) return m; return 0};
+
+/* score one venue for one month from whatever has been entered */
+function scoreVenue(venue,month){
+  const m=S.monthly[`${venue}|${month}`];
+  if(!m) return {none:true,total:0,missing:KPIS.length,rows:[]};
+  const T=TARGETS[venue]||TARGETS.Char;
+  let total=0,missing=0;
+  const rows=KPIS.map(k=>{
+    const F=T[k.f],G=m[k.f];
+    if(G==null){missing++;return{k,F,G:null}}
+    const a=achv(k.area,k.unit,k.dir,F,G); total+=a*k.wt;
+    return {k,F,G,a,sc:a*k.wt,rag:ragOf(a)};
+  });
+  return {total,missing,rows,data:m,none:false};
+}
+const sKey=()=>$("s-month").value;
+function sign(venue){ const k=`${venue}|${sKey()}`;
+  if(!S.signoff[k]) S.signoff[k]={radwan:"Pending",fareed:"Pending",owner:"Pending",gate3:"PASS"};
+  return S.signoff[k]; }
+function setSign(venue,who,val){ sign(venue)[who]=val;
+  push({action:"signoff",key:`${venue}|${sKey()}`,venue,month:sKey(),data:sign(venue)});
+  renderScore(); }
+
+function initScore(){
+  if(!$("s-month").value) $("s-month").value = $("m-month").value ||
+    (()=>{const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7)})();
+  renderScore();
+}
+
+function renderScore(){
+  const month=sKey(), vs=S.outlets.slice(0,2);
+  const R={}; vs.forEach(v=>R[v]=scoreVenue(v,month));
+  const weight=100/vs.length;
+  const anyData=vs.some(v=>!R[v].none);
+  let combined=0; vs.forEach(v=>combined+=R[v].total*weight/100);
+
+  let h="";
+
+  /* ---- headline ---- */
+  h+=`<div class="read" style="margin-top:0">`;
+  if(!anyData){
+    h+=`<b>Nothing closed for ${month} yet.</b> Enter the department figures under Monthly close and the scorecard builds itself from there.`;
+  }else{
+    const miss=vs.reduce((a,v)=>a+R[v].missing,0);
+    h+=`<b>Combined Umami score ${combined.toFixed(2)} — ${bandOf(combined)}.</b> `;
+    h+=vs.map(v=>`${v} ${R[v].total.toFixed(1)}`).join(" · ")+`, weighted ${weight}/${weight}. `;
+    h+= miss? `<b>${miss} KPI${miss>1?"s":""} still outstanding</b>, so this is provisional.`
+            : `All KPIs provided.`;
+  }
+  h+=`</div>`;
+
+  /* ---- per venue ---- */
+  h+=`<div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:8px">`;
+  vs.forEach(v=>{
+    const r=R[v];
+    const reds=r.rows.filter(x=>x.rag&&x.rag[0]==="RED").length;
+    const ambers=r.rows.filter(x=>x.rag&&x.rag[0]==="AMBER").length;
+    const greens=r.rows.filter(x=>x.rag&&x.rag[0]==="GREEN").length;
+    h+=`<div class="panel" style="flex:1 1 320px;padding:18px 20px">
+      <h3 style="font-size:19px;margin-bottom:2px">${v} Kitchen</h3>
+      <div class="ps" style="margin-bottom:14px">${r.none?"Not closed":`Direct score <b>${r.total.toFixed(2)}</b> — ${bandOf(r.total)}`}</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <span class="pill" style="background:${C.red}">${reds} red</span>
+        <span class="pill" style="background:${C.brass}">${ambers} amber</span>
+        <span class="pill" style="background:${C.green}">${greens} green</span>
+        ${r.missing?`<span class="pill" style="background:${C.mute}">${r.missing} waiting</span>`:""}
+      </div>`;
+    SIGNERS.forEach(([key,label])=>{
+      const cur=sign(v)[key];
+      const col=cur==="Approved"?C.green:cur==="Queried"?C.red:C.mute;
+      h+=`<div style="display:flex;align-items:center;gap:9px;margin-bottom:7px">
+        <span style="flex:1;font-size:13px">${label}</span>
+        <select onchange="setSign('${v}','${key}',this.value)" style="width:120px;padding:6px 8px;font-size:12.5px">
+          ${SSTATE.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}
+        </select>
+        <span class="sdot" style="background:${col};width:10px;height:10px;border-radius:50%"></span></div>`;
+    });
+    h+=`<div style="display:flex;align-items:center;gap:9px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+      <span style="flex:1;font-size:13px">Evidence complete, no manipulation</span>
+      <select onchange="sign('${v}').gate3=this.value;renderScore()" style="width:120px;padding:6px 8px;font-size:12.5px">
+        <option ${sign(v).gate3==="PASS"?"selected":""}>PASS</option>
+        <option ${sign(v).gate3==="FAIL"?"selected":""}>FAIL</option></select></div>`;
+    h+=`<div class="hint" style="margin-top:8px">Prepared by Chef Irfan Malek</div></div>`;
+  });
+  h+=`</div>`;
+
+  /* ---- bonus gates ---- */
+  const breach = vs.some(v=>R[v].data && +R[v].data.unresolvedBreach>0);
+  const costRed= vs.some(v=>{const row=R[v].rows.find(x=>x.k.f==="actualFC");return row&&row.rag&&row.rag[0]==="RED"});
+  const evid   = vs.every(v=>sign(v).gate3==="PASS");
+  const signed = vs.every(v=>SIGNERS.every(([k])=>sign(v)[k]==="Approved"));
+  const queried= vs.some(v=>SIGNERS.some(([k])=>sign(v)[k]==="Queried"));
+  const gates=[
+    ["Gate 1","No unresolved critical food-safety breach", !breach,
+      breach?"A breach is recorded in the QA figures":"Nothing recorded"],
+    ["Gate 2","Food cost not RED at either outlet", !costRed,
+      costRed?"Food cost is RED — see the venue panels":"Within tolerance"],
+    ["Gate 3","Evidence complete, no reporting manipulation", evid,
+      evid?"Confirmed on both sheets":"Marked FAIL on a venue"],
+    ["Gate 4","Sign-off complete, nothing queried", signed&&!queried,
+      queried?"A reviewer has queried a line":(signed?"All three approved":"Awaiting approvals")]
+  ];
+  const allPass=gates.every(g=>g[2]);
+  h+=`<div class="eyebrow" style="margin-top:22px">Bonus gates</div>
+      <h1 class="pg" style="font-size:24px;margin-bottom:12px">All four must pass</h1>
+      <table class="ap"><tbody>`;
+  gates.forEach(([n,label,pass,why])=>{
+    h+=`<tr><td style="width:9%"><b>${n}</b></td><td style="width:46%">${label}</td>
+      <td style="width:30%"><span class="hint" style="margin:0">${why}</span></td>
+      <td><span class="pill" style="background:${pass?C.green:C.red}">${pass?"PASS":"FAIL"}</span></td></tr>`;
+  });
+  h+=`<tr style="background:var(--paper)"><td><b>Overall</b></td><td><b>Bonus eligibility</b></td><td></td>
+      <td><span class="pill" style="background:${allPass?C.green:C.red}">${allPass?"PASS":"FAIL"}</span></td></tr>`;
+  h+=`</tbody></table>`;
+
+  /* ---- quarter ---- */
+  const months=[]; const d=new Date(month+"-01");
+  for(let i=2;i>=0;i--){const x=new Date(d); x.setMonth(x.getMonth()-i); months.push(x.toISOString().slice(0,7));}
+  const q=months.map(mm=>{let t=0,any=false;
+    vs.forEach(v=>{const r=scoreVenue(v,mm); if(!r.none){any=true;t+=r.total*weight/100}});
+    return any?t:null;});
+  const have=q.filter(x=>x!=null);
+  const qavg=have.length? have.reduce((a,b)=>a+b,0)/have.length : 0;
+  h+=`<div class="eyebrow" style="margin-top:26px">Quarter to ${month}</div>
+      <h1 class="pg" style="font-size:24px;margin-bottom:12px">Bonus is assessed on the three-month average</h1>
+      <table class="ap"><thead><tr>
+        <th>${months[0]}</th><th>${months[1]}</th><th>${months[2]}</th>
+        <th>Quarter average</th><th>Band</th><th>Multiplier</th></tr></thead><tbody><tr>`;
+  q.forEach(x=>h+=`<td>${x==null?'<span class="kgrey">no data</span>':'<b>'+x.toFixed(2)+'</b>'}</td>`);
+  h+=`<td><b>${have.length?qavg.toFixed(2):"—"}</b></td>
+      <td>${have.length?bandOf(qavg):"—"}</td>
+      <td><b>${have.length?(allPass?multOf(qavg).toFixed(2)+"×":"0 — gate failed"):"—"}</b></td></tr></tbody></table>`;
+  if(have.length<3) h+=`<div class="hint">Based on ${have.length} month${have.length===1?"":"s"} of the three. The average fills out as months are closed.</div>`;
+
+  /* ---- the note to send ---- */
+  h+=`<div class="eyebrow" style="margin-top:30px">Monthly report</div>
+      <h1 class="pg" style="font-size:24px;margin-bottom:6px">Ready to send</h1>
+      <p class="hint" style="margin-bottom:12px">Click to select, then paste into your email.</p>
+      <textarea class="exp" style="height:230px" onclick="this.select()" readonly>${esc(reportText(month,vs,R,combined,gates,allPass,qavg,have.length))}</textarea>`;
+  $("s-body").innerHTML=h;
+}
+
+/* plain-language monthly summary, written from the figures */
+function reportText(month,vs,R,combined,gates,allPass,qavg,qn){
+  const L=[];
+  L.push(`KITCHEN SCORECARD — ${month}`);
+  L.push(`Umami · Char & Barten · prepared by Chef Irfan Malek`);
+  L.push("");
+  L.push(`Combined score: ${combined.toFixed(2)} — ${bandOf(combined)}`);
+  vs.forEach(v=>{
+    const r=R[v];
+    L.push("");
+    L.push(`${v.toUpperCase()} — ${r.none?"not closed":r.total.toFixed(2)+" ("+bandOf(r.total)+")"}`);
+    r.rows.forEach(x=>{
+      if(x.G==null){ L.push(`  ${x.k.kpi}: awaiting figure`); return; }
+      L.push(`  ${x.k.kpi}: ${x.G} against ${x.F} — ${(x.a*100).toFixed(0)}% ${x.rag[0]}`);
+    });
+    const reds=r.rows.filter(x=>x.rag&&x.rag[0]==="RED");
+    if(reds.length) L.push(`  Requires attention: ${reds.map(x=>x.k.kpi).join("; ")}`);
+  });
+  L.push("");
+  L.push("BONUS GATES");
+  gates.forEach(([n,label,pass])=>L.push(`  ${n} ${pass?"PASS":"FAIL"} — ${label}`));
+  L.push(`  Overall: ${allPass?"PASS":"FAIL"}`);
+  L.push("");
+  L.push(`QUARTER AVERAGE: ${qn?qavg.toFixed(2)+" ("+bandOf(qavg)+")":"not yet available"}${qn&&qn<3?` — based on ${qn} of 3 months`:""}`);
+  const open=S.actions.filter(a=>a.status!=="Closed");
+  L.push("");
+  L.push(`OPEN CORRECTIVE ACTIONS: ${open.length}`);
+  open.slice(0,8).forEach(a=>L.push(`  [${a.priority}] ${a.venue} · ${a.issue} — ${a.owner}, due ${a.due} (${a.status})`));
+  return L.join("\n");
+}
+
+/* ================= CORRECTIVE ACTION TRACKER ================= */
+function addAction(){
+  const g=id=>$(id).value.trim();
+  if(!g("a-issue")){ $("a-issue").focus(); return; }
+  const o={id:S.aEdit||("a"+(S.uid++)), priority:$("a-pri").value, venue:$("a-venue").value,
+    cat:$("a-cat").value, issue:g("a-issue"), impact:g("a-impact"), action:g("a-action"),
+    owner:g("a-owner"), due:g("a-due"), status:$("a-status").value};
+  if(S.aEdit){ S.actions=S.actions.map(x=>x.id===S.aEdit?o:x); S.aEdit=null; $("a-btn").textContent="Add"; }
+  else S.actions.unshift(o);
+  ["a-issue","a-impact","a-action","a-owner","a-due"].forEach(i=>$(i).value="");
+  push({action:"actions",actions:S.actions});
+  renderActions();
+}
+function editAction(id){
+  const o=S.actions.find(x=>x.id===id); if(!o) return;
+  $("a-pri").value=o.priority; $("a-venue").value=o.venue; $("a-cat").value=o.cat;
+  $("a-issue").value=o.issue; $("a-impact").value=o.impact; $("a-action").value=o.action;
+  $("a-owner").value=o.owner; $("a-due").value=o.due; $("a-status").value=o.status;
+  S.aEdit=id; $("a-btn").textContent="Update"; window.scrollTo({top:0,behavior:"smooth"});
+}
+function delAction(id){ S.actions=S.actions.filter(x=>x.id!==id);
+  push({action:"actions",actions:S.actions}); renderActions(); }
+function cycleStatus(id){
+  const o=S.actions.find(x=>x.id===id); if(!o) return;
+  o.status = o.status==="Open"?"WIP":o.status==="WIP"?"Closed":"Open";
+  push({action:"actions",actions:S.actions}); renderActions();
+}
+function renderActions(){
+  $("a-venue").innerHTML=S.outlets.map(o=>`<option>${o}</option>`).join("")+`<option>Both</option>`;
+  const open=S.actions.filter(a=>a.status!=="Closed");
+  $("a-count").innerHTML=S.actions.length
+    ? `${S.actions.length} logged<br>${open.length} still open`
+    : "";
+  if(!S.actions.length){
+    $("a-list").innerHTML=`<div class="empty">No issues logged yet.<br>Add the ones from your review above and they will carry forward until closed.</div>`;
+    return;
+  }
+  const PC={RED:C.red,AMBER:C.brass,GREEN:C.green};
+  const SC={Open:C.mute,WIP:C.brass,Closed:C.green};
+  const order={RED:0,AMBER:1,GREEN:2};
+  const list=[...S.actions].sort((a,b)=>
+    (a.status==="Closed"?1:0)-(b.status==="Closed"?1:0) || order[a.priority]-order[b.priority]);
+  let h=`<table class="ap"><thead><tr>
+    <th style="width:8%">Priority</th><th style="width:9%">Outlet</th><th style="width:22%">Issue</th>
+    <th style="width:22%">Corrective action</th><th style="width:14%">Owner</th>
+    <th style="width:8%">Due</th><th style="width:9%">Status</th><th style="width:8%"></th></tr></thead><tbody>`;
+  list.forEach(a=>{
+    h+=`<tr${a.status==="Closed"?' style="opacity:.55"':''}>
+      <td><span class="pill" style="background:${PC[a.priority]}">${a.priority}</span></td>
+      <td>${esc(a.venue)}<div class="hint" style="margin:0">${esc(a.cat)}</div></td>
+      <td><b>${esc(a.issue)}</b>${a.impact?`<div class="hint" style="margin:0">${esc(a.impact)}</div>`:""}</td>
+      <td>${esc(a.action)}</td><td>${esc(a.owner)}</td><td>${esc(a.due)}</td>
+      <td><span class="pill" style="background:${SC[a.status]};cursor:pointer" onclick="cycleStatus('${a.id}')">${a.status}</span></td>
+      <td style="text-align:right">
+        <button class="wl-b" onclick="editAction('${a.id}')">&#9998;</button>
+        <button class="wl-b" onclick="delAction('${a.id}')">&#10005;</button></td></tr>`;
+  });
+  h+=`</tbody></table><div class="hint">Click a status to move it on: Open → WIP → Closed. Closed items stay on the record rather than disappearing.</div>`;
+  $("a-list").innerHTML=h;
+}
+
+/* ---------- admin ---------- */
+function renderAdmin(){
+  $("adm-users").innerHTML=S.users.map(u=>{
+    const exec=isExec(u);
+    return `<tr>
+      <td><input type="text" value="${esc(u.name)}" onchange="setU('${u.id}','name',this.value)"></td>
+      <td><select onchange="setU('${u.id}','role',this.value)">
+        ${["Head Chef","Sous Chef","Executive Chef"].map(r=>`<option ${u.role===r?"selected":""}>${r}</option>`).join("")}
+      </select></td>
+      <td>${exec?`<span style="color:var(--mute);font-size:12.5px">All kitchens</span>`
+        :`<select onchange="setU('${u.id}','venue',this.value)">
+          ${S.outlets.map(o=>`<option ${u.venue===o?"selected":""}>${o}</option>`).join("")}</select>`}</td>
+      <td><input type="text" maxlength="4" value="${esc(u.pin)}" onchange="setU('${u.id}','pin',this.value)"></td>
+      <td style="text-align:right">${S.user.id===u.id
+        ?`<span style="color:var(--mute);font-size:12px">You</span>`
+        :`<button class="btn ghost sm" onclick="delUser('${u.id}')">Remove</button>`}</td></tr>`;
+  }).join("");
+  $("nu-venue").innerHTML=S.outlets.map(o=>`<option>${o}</option>`).join("");
+  $("adm-outlets").innerHTML=S.outlets.map(o=>{
+    const n=S.users.filter(u=>u.venue===o).length;
+    return `<span class="tag">${o}<span style="color:var(--mute);font-weight:400">${n} assigned</span>
+      <button title="Remove" onclick="delOutlet('${o}')">&#10005;</button></span>`}).join("");
+}
+function setU(id,f,v){
+  const u=S.users.find(x=>x.id===id); u[f]=v;
+  if(f==="role"&&isExec(u)) u.venue="";
+  if(f==="role"&&!isExec(u)&&!u.venue) u.venue=S.outlets[0]||"";
+  push({action:"users",users:S.users}); renderAdmin();
+}
+function addUser(){
+  const name=$("nu-name").value.trim(); if(!name){$("nu-name").focus();return}
+  const role=$("nu-role").value;
+  S.users.push({id:"u"+(S.uid++),name,role,venue:role==="Executive Chef"?"":$("nu-venue").value,
+    pin:$("nu-pin").value||"1234"});
+  $("nu-name").value="";$("nu-pin").value="1234";
+  push({action:"users",users:S.users}); renderAdmin();
+}
+function delUser(id){
+  if(S.users.length<=1) return;
+  S.users=S.users.filter(u=>u.id!==id);
+  push({action:"users",users:S.users}); renderAdmin();
+}
+function addOutlet(){
+  const n=$("no-name").value.trim(); if(!n) return;
+  if(S.outlets.includes(n)){$("no-name").value="";return}
+  S.outlets.push(n); $("no-name").value="";
+  push({action:"outlets",outlets:S.outlets}); renderAdmin(); venueChips();
+}
+function delOutlet(o){
+  const n=S.users.filter(u=>u.venue===o).length;
+  if(n){ alert(`${o} still has ${n} person${n>1?"s":""} assigned. Move them first.`); return; }
+  S.outlets=S.outlets.filter(x=>x!==o);
+  if(S.venue===o) S.venue=S.outlets[0]||"";
+  push({action:"outlets",outlets:S.outlets}); renderAdmin(); venueChips();
+}
+
+/* ---------- init ---------- */
+chips("c-temps","temps",()=>{$("tempbox").style.display=S.temps==="fail"?"block":"none"});
+chips("c-recipe","recipe",()=>{$("dev").style.display=S.recipe==="fail"?"block":"none"});
+boot();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
