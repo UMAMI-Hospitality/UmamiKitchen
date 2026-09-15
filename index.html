@@ -452,7 +452,20 @@ function saveMonth(){
 
 
 /* ================= SCORECARD, GATES, SIGN-OFF ================= */
-const SIGNERS=[["radwan","Reviewed by (Radwan)"],["fareed","Reviewed by (Fareed)"],["owner","Final approval (Owner)"]];
+/* Three sign-off slots. Whoever is assigned a slot in Chefs & outlets is the
+   only person who can set it — except the Executive Chef, who can set any of
+   them but is then recorded as having done so. */
+const SIGNERS=[["radwan","First review"],["fareed","Second review"],["owner","Final approval"]];
+const slotHolder=k=>S.users.find(u=>u.signs===k);
+function slotLabel(k,fallback){
+  const u=slotHolder(k);
+  return u? `${fallback} (${u.name.replace(/^Chef\s+/i,"")})` : fallback;
+}
+const canSign=k=>{
+  if(!S.user) return false;
+  if(isExec(S.user)) return true;
+  return isMgmt(S.user) && S.user.signs===k;
+};
 const SSTATE=["Pending","Approved","Queried"];
 const BONUS=[[105,1.2,"Exceptional"],[95,1.0,"Excellent"],[85,0.75,"Strong"],[75,0.5,"Acceptable"],[0,0,"Needs Improvement"]];
 const multOf=x=>{for(const[t,m]of BONUS) if(x>=t) return m; return 0};
@@ -475,12 +488,17 @@ const sKey=()=>$("s-month").value;
 function sign(venue){ const k=`${venue}|${sKey()}`;
   if(!S.signoff[k]) S.signoff[k]={radwan:"Pending",fareed:"Pending",owner:"Pending",gate3:"PASS"};
   return S.signoff[k]; }
-function setSign(venue,who,val){ sign(venue)[who]=val;
-  push({action:"signoff",key:`${venue}|${sKey()}`,venue,month:sKey(),data:sign(venue)});
-  renderScore(); }
+function setSign(venue,who,val){
+  const g=sign(venue);
+  g[who]=val;
+  g[who+"By"]=S.user.name;
+  g[who+"At"]=new Date().toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  push({action:"signoff",key:`${venue}|${sKey()}`,venue,month:sKey(),data:g});
+  renderScore();
+}
 
 function initScore(){
-  if(!$("s-month").value) $("s-month").value = $("m-month").value ||
+  if(!$("s-month").value) $("s-month").value = ($("m-month")||{}).value ||
     (()=>{const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7)})();
   renderScore();
 }
@@ -523,19 +541,30 @@ function renderScore(){
         <span class="pill" style="background:${C.green}">${greens} green</span>
         ${r.missing?`<span class="pill" style="background:${C.mute}">${r.missing} waiting</span>`:""}
       </div>`;
-    SIGNERS.forEach(([key,label])=>{
-      const cur=sign(v)[key];
+    SIGNERS.forEach(([key,fallback])=>{
+      const g=sign(v), cur=g[key];
       const col=cur==="Approved"?C.green:cur==="Queried"?C.red:C.mute;
-      h+=`<div style="display:flex;align-items:center;gap:9px;margin-bottom:7px">
-        <span style="flex:1;font-size:13px">${label}</span>
-        <select onchange="setSign('${v}','${key}',this.value)" style="width:120px;padding:6px 8px;font-size:12.5px">
-          ${SSTATE.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}
-        </select>
-        <span class="sdot" style="background:${col};width:10px;height:10px;border-radius:50%"></span></div>`;
+      const mine=canSign(key), holder=slotHolder(key);
+      /* if someone other than the slot holder set it, say so */
+      const by=g[key+"By"];
+      const odd = by && holder && by!==holder.name;
+      h+=`<div style="margin-bottom:9px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="flex:1;font-size:13px">${slotLabel(key,fallback)}</span>
+          <select ${mine?"":"disabled"} onchange="setSign('${v}','${key}',this.value)"
+                  style="width:120px;padding:6px 8px;font-size:12.5px${mine?"":";opacity:.55"}">
+            ${SSTATE.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}
+          </select>
+          <span class="sdot" style="background:${col};width:10px;height:10px;border-radius:50%"></span>
+        </div>`;
+      if(by) h+=`<div class="hint" style="margin:3px 0 0">${odd?"<b>Set by "+esc(by)+"</b>":"Set by "+esc(by)}${g[key+"At"]?" · "+g[key+"At"]:""}</div>`;
+      else if(!holder) h+=`<div class="hint" style="margin:3px 0 0">No one assigned to this slot yet</div>`;
+      h+=`</div>`;
     });
     h+=`<div style="display:flex;align-items:center;gap:9px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
       <span style="flex:1;font-size:13px">Evidence complete, no manipulation</span>
-      <select onchange="sign('${v}').gate3=this.value;renderScore()" style="width:120px;padding:6px 8px;font-size:12.5px">
+      <select ${isExec(S.user)?"":"disabled"} onchange="sign('${v}').gate3=this.value;renderScore()"
+              style="width:120px;padding:6px 8px;font-size:12.5px${isExec(S.user)?"":";opacity:.55"}">
         <option ${sign(v).gate3==="PASS"?"selected":""}>PASS</option>
         <option ${sign(v).gate3==="FAIL"?"selected":""}>FAIL</option></select></div>`;
     h+=`<div class="hint" style="margin-top:8px">Prepared by Chef Irfan Malek</div></div>`;
@@ -1131,17 +1160,28 @@ table.adm input,table.adm select{padding:8px 10px;font-size:13.5px}
     <div class="ps">Anyone listed here can sign in. Head chefs and sous chefs see only their own kitchen; the Executive Chef sees every kitchen and is the only role that can release a report to the management dashboard.</div>
     <table class="adm"><thead><tr>
       <th style="width:26%">Name</th><th style="width:20%">Role</th><th style="width:20%">Outlet</th>
-      <th style="width:14%">PIN</th><th></th></tr></thead>
+      <th style="width:16%">Signs off</th><th style="width:12%">PIN</th><th></th></tr></thead>
       <tbody id="adm-users"></tbody></table>
     <div class="addrow">
       <div><span class="sub">Name</span><input type="text" id="nu-name" placeholder="Chef ..."></div>
-      <div><span class="sub">Role</span><select id="nu-role">
+      <div><span class="sub">Role</span><select id="nu-role" onchange="newUserRole()">
         <option value="Head Chef">Head Chef</option><option value="Sous Chef">Sous Chef</option>
-        <option value="Executive Chef">Executive Chef</option></select></div>
+        <option value="Executive Chef">Executive Chef</option>
+        <option value="Management">Management</option></select></div>
+      <div id="nu-signwrap" style="display:none"><span class="sub">Signs off</span>
+        <select id="nu-signs"><option value="">—</option></select></div>
       <div><span class="sub">Outlet</span><select id="nu-venue"></select></div>
       <div style="flex:0 0 90px"><span class="sub">PIN</span><input type="text" maxlength="4" id="nu-pin" value="1234"></div>
       <button class="btn" onclick="addUser()">Add</button>
     </div>
+  </div>
+
+  <div class="panel">
+    <h3>Device setup link</h3>
+    <div class="ps">Send this to a phone and it connects itself &mdash; no URL, no token, nothing to type.
+    Treat it like a password: it carries the connection details, so send it directly to the person,
+    not into a group anyone can read.</div>
+    <div id="setuplink"></div>
   </div>
 
   <div class="panel">
@@ -1168,7 +1208,24 @@ function loadCfg(){
   try{ const v=localStorage.getItem("umami_cfg"); if(v) return JSON.parse(v); }catch(e){}
   return window.KITCHEN_CONFIG || {};
 }
-const CFG       = loadCfg();
+/* A setup link carries the connection details so a chef never types them.
+   Used once, saved to the device, then wiped from the address bar so the
+   token is not left sitting in history or a bookmark. */
+function consumeSetupLink(){
+  try{
+    const m=/[?&]setup=([^&]+)/.exec(location.search);
+    if(!m) return null;
+    let b=m[1].replace(/-/g,"+").replace(/_/g,"/");
+    while(b.length%4) b+="=";
+    const o=JSON.parse(decodeURIComponent(escape(atob(b))));
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(o.u||"")) return null;
+    const cfg={API_URL:o.u, API_TOKEN:o.t||""};
+    try{ localStorage.setItem("umami_cfg",JSON.stringify(cfg)); }catch(e){}
+    try{ history.replaceState({}, "", location.pathname); }catch(e){}
+    return cfg;
+  }catch(e){ return null; }
+}
+const CFG       = consumeSetupLink() || loadCfg();
 const API_URL   = CFG.API_URL   || "";
 const API_TOKEN = CFG.API_TOKEN || "";   /* supplied per device, or by config.js */
 
@@ -1321,7 +1378,10 @@ let S={
   temps:"", recipe:"", checked:{}, openId:null, uid:4
 };
 
-const isExec = u => u && u.role==="Executive Chef";
+const isExec  = u => u && u.role==="Executive Chef";
+const isMgmt  = u => u && u.role==="Management";
+const seesAll = u => isExec(u) || isMgmt(u);
+const allOutlets = u => isExec(u) || isMgmt(u);   /* no single venue */
 
 /* dishes from the H1 2026 sales mix; a real build would load the full menu */
 const DISHES={
@@ -1380,7 +1440,7 @@ function initials(n){const p=n.replace(/^Chef\s+/i,"").trim().split(/\s+/);
 const money=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtDate=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
 const keyOf=d=>d.toISOString().slice(0,10);
-function chefName(v){const u=S.users.find(x=>x.venue===v&&x.role!=="Executive Chef");return u?u.name:"Head chef, "+v}
+function chefName(v){const u=S.users.find(x=>x.venue===v&&!seesAll(x));return u?u.name:"Head chef, "+v}
 function ownerName(role,v){
   if(/head chef|sous chef/i.test(role)) return chefName(v);
   if(/chef irfan/i.test(role)) return "Chef Irfan Malek";
@@ -1389,14 +1449,16 @@ function ownerName(role,v){
 
 /* ---------- sign in ---------- */
 function renderUsers(){
-  const ex=S.users.filter(isExec), rest=S.users.filter(u=>!isExec(u));
+  const ex=S.users.filter(isExec), mg=S.users.filter(isMgmt),
+        rest=S.users.filter(u=>!isExec(u)&&!isMgmt(u));
   const card=u=>`<button class="ucard ${S.pick===u.id?'on':''}" onclick="pickUser('${u.id}')">
       <span class="uav">${initials(u.name)}</span>
       <span><span class="un">${esc(u.name)}</span>
-      <span class="ur">${u.role}${u.venue?" · "+u.venue+" kitchen":" · all kitchens"}</span></span></button>`;
+      <span class="ur">${u.role}${u.venue?" · "+u.venue+" kitchen":" · all outlets"}</span></span></button>`;
   $("users").innerHTML =
-    (ex.length? `<div class="grouplab">Executive</div>`+ex.map(card).join("") : "") +
-    (rest.length? `<div class="grouplab">Kitchens</div>`+rest.map(card).join("") : "");
+    (ex.length?   `<div class="grouplab">Executive</div>`+ex.map(card).join("")   : "") +
+    (mg.length?   `<div class="grouplab">Management</div>`+mg.map(card).join("")  : "") +
+    (rest.length? `<div class="grouplab">Kitchens</div>`+rest.map(card).join("")  : "");
 }
 function pickUser(id){S.pick=id;renderUsers();$("pinbox").style.display="block";$("i-pin").value="";$("i-pin").focus()}
 function doSignIn(){
@@ -1405,7 +1467,9 @@ function doSignIn(){
   if($("i-pin").value!==u.pin){$("pinhint").innerHTML="<b>Wrong PIN.</b> Default is 1234 unless it was changed.";return}
   S.user=u; S.venue=isExec(u)? S.outlets[0] : u.venue;
   $("topbar").style.display="flex";
-  renderNav(); newLog(); setView("log");
+  renderNav();
+  if(isMgmt(u)){ setView("score"); }
+  else { newLog(); setView("log"); }
 }
 function signOut(){
   S.user=null;S.pick=null;S.editingId=null;S.openId=null;
@@ -1415,7 +1479,10 @@ function signOut(){
 
 /* ---------- nav ---------- */
 function renderNav(){
-  const tabs=[["log","Daily log"],["reports","Daily summary report"]];
+  /* Management reviews and signs. It does not file logs or hold the admin. */
+  const tabs = isMgmt(S.user)
+    ? [["score","Scorecard"],["reports","Daily reports"],["dash","Operations"]]
+    : [["log","Daily log"],["reports","Daily summary report"]];
   if(isExec(S.user)) tabs.push(["month","Monthly close"],["score","Scorecard"],
         ["actions","Actions"],["dash","Operations"],["admin","Chefs & outlets"]);
   $("nav").innerHTML=tabs.map(([k,t])=>`<button class="${S.view===k?'on':''}" onclick="setView('${k}')">${t}</button>`).join("");
@@ -1423,7 +1490,17 @@ function renderNav(){
     <a onclick="signOut()">Sign out</a>` +
     (IN_APPS ? "" : ` <a onclick="if(confirm('Disconnect this device from the sheet?'))forgetCfg()">Disconnect</a>`);
 }
+const ALLOWED={
+  "Executive Chef":["log","reports","month","score","actions","dash","admin"],
+  "Management":["score","reports","dash"],
+  "Head Chef":["log","reports"],
+  "Sous Chef":["log","reports"]
+};
 function setView(v){
+  if(S.user && v!=="signin"){
+    const ok=ALLOWED[S.user.role]||["log","reports"];
+    if(!ok.includes(v)) v=ok[0];
+  }
   S.view=v;
   ["signin","log","reports","month","score","actions","dash","admin"]
     .forEach(k=>$("v-"+k).classList.toggle("on",k===v));
@@ -1721,7 +1798,7 @@ function saveLog(){
 }
 
 /* ---------- reports ---------- */
-const visible=()=>isExec(S.user)?S.reports:S.reports.filter(r=>r.venue===S.user.venue);
+const visible=()=>seesAll(S.user)?S.reports:S.reports.filter(r=>r.venue===S.user.venue);
 
 /* what actually changed between two versions, in plain words */
 function diff(a,b){
@@ -1743,7 +1820,7 @@ function diff(a,b){
 }
 function renderReports(){
   const list=visible();
-  $("rpt-scope").textContent=isExec(S.user)?"All kitchens":S.user.venue+" kitchen";
+  $("rpt-scope").textContent=seesAll(S.user)?"All kitchens":S.user.venue+" kitchen";
   $("rpt-count").innerHTML=list.length
     ? `${list.length} report${list.length>1?"s":""}<br>${list.filter(r=>r.status==="released").length} released to management`
     : "";
@@ -1753,7 +1830,7 @@ function renderReports(){
   }
   $("rpt-list").innerHTML=list.map(r=>{
     const rel=r.status==="released";
-    const canEdit = isExec(S.user) || !rel;
+    const canEdit = isMgmt(S.user) ? false : (isExec(S.user) || !rel);
     return `<div class="rpt">
       <div><div class="rpt-d">${r.dateLabel}</div>
         <div class="rpt-m">${r.venue} &middot; filed by ${esc(r.who)} at ${r.time}${r.edited?` &middot; corrected ${esc(r.edited)}`:""}</div></div>
@@ -2230,7 +2307,20 @@ function saveMonth(){
 
 
 /* ================= SCORECARD, GATES, SIGN-OFF ================= */
-const SIGNERS=[["radwan","Reviewed by (Radwan)"],["fareed","Reviewed by (Fareed)"],["owner","Final approval (Owner)"]];
+/* Three sign-off slots. Whoever is assigned a slot in Chefs & outlets is the
+   only person who can set it — except the Executive Chef, who can set any of
+   them but is then recorded as having done so. */
+const SIGNERS=[["radwan","First review"],["fareed","Second review"],["owner","Final approval"]];
+const slotHolder=k=>S.users.find(u=>u.signs===k);
+function slotLabel(k,fallback){
+  const u=slotHolder(k);
+  return u? `${fallback} (${u.name.replace(/^Chef\s+/i,"")})` : fallback;
+}
+const canSign=k=>{
+  if(!S.user) return false;
+  if(isExec(S.user)) return true;
+  return isMgmt(S.user) && S.user.signs===k;
+};
 const SSTATE=["Pending","Approved","Queried"];
 const BONUS=[[105,1.2,"Exceptional"],[95,1.0,"Excellent"],[85,0.75,"Strong"],[75,0.5,"Acceptable"],[0,0,"Needs Improvement"]];
 const multOf=x=>{for(const[t,m]of BONUS) if(x>=t) return m; return 0};
@@ -2253,12 +2343,17 @@ const sKey=()=>$("s-month").value;
 function sign(venue){ const k=`${venue}|${sKey()}`;
   if(!S.signoff[k]) S.signoff[k]={radwan:"Pending",fareed:"Pending",owner:"Pending",gate3:"PASS"};
   return S.signoff[k]; }
-function setSign(venue,who,val){ sign(venue)[who]=val;
-  push({action:"signoff",key:`${venue}|${sKey()}`,venue,month:sKey(),data:sign(venue)});
-  renderScore(); }
+function setSign(venue,who,val){
+  const g=sign(venue);
+  g[who]=val;
+  g[who+"By"]=S.user.name;
+  g[who+"At"]=new Date().toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  push({action:"signoff",key:`${venue}|${sKey()}`,venue,month:sKey(),data:g});
+  renderScore();
+}
 
 function initScore(){
-  if(!$("s-month").value) $("s-month").value = $("m-month").value ||
+  if(!$("s-month").value) $("s-month").value = ($("m-month")||{}).value ||
     (()=>{const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7)})();
   renderScore();
 }
@@ -2301,19 +2396,30 @@ function renderScore(){
         <span class="pill" style="background:${C.green}">${greens} green</span>
         ${r.missing?`<span class="pill" style="background:${C.mute}">${r.missing} waiting</span>`:""}
       </div>`;
-    SIGNERS.forEach(([key,label])=>{
-      const cur=sign(v)[key];
+    SIGNERS.forEach(([key,fallback])=>{
+      const g=sign(v), cur=g[key];
       const col=cur==="Approved"?C.green:cur==="Queried"?C.red:C.mute;
-      h+=`<div style="display:flex;align-items:center;gap:9px;margin-bottom:7px">
-        <span style="flex:1;font-size:13px">${label}</span>
-        <select onchange="setSign('${v}','${key}',this.value)" style="width:120px;padding:6px 8px;font-size:12.5px">
-          ${SSTATE.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}
-        </select>
-        <span class="sdot" style="background:${col};width:10px;height:10px;border-radius:50%"></span></div>`;
+      const mine=canSign(key), holder=slotHolder(key);
+      /* if someone other than the slot holder set it, say so */
+      const by=g[key+"By"];
+      const odd = by && holder && by!==holder.name;
+      h+=`<div style="margin-bottom:9px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="flex:1;font-size:13px">${slotLabel(key,fallback)}</span>
+          <select ${mine?"":"disabled"} onchange="setSign('${v}','${key}',this.value)"
+                  style="width:120px;padding:6px 8px;font-size:12.5px${mine?"":";opacity:.55"}">
+            ${SSTATE.map(o=>`<option ${cur===o?"selected":""}>${o}</option>`).join("")}
+          </select>
+          <span class="sdot" style="background:${col};width:10px;height:10px;border-radius:50%"></span>
+        </div>`;
+      if(by) h+=`<div class="hint" style="margin:3px 0 0">${odd?"<b>Set by "+esc(by)+"</b>":"Set by "+esc(by)}${g[key+"At"]?" · "+g[key+"At"]:""}</div>`;
+      else if(!holder) h+=`<div class="hint" style="margin:3px 0 0">No one assigned to this slot yet</div>`;
+      h+=`</div>`;
     });
     h+=`<div style="display:flex;align-items:center;gap:9px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
       <span style="flex:1;font-size:13px">Evidence complete, no manipulation</span>
-      <select onchange="sign('${v}').gate3=this.value;renderScore()" style="width:120px;padding:6px 8px;font-size:12.5px">
+      <select ${isExec(S.user)?"":"disabled"} onchange="sign('${v}').gate3=this.value;renderScore()"
+              style="width:120px;padding:6px 8px;font-size:12.5px${isExec(S.user)?"":";opacity:.55"}">
         <option ${sign(v).gate3==="PASS"?"selected":""}>PASS</option>
         <option ${sign(v).gate3==="FAIL"?"selected":""}>FAIL</option></select></div>`;
     h+=`<div class="hint" style="margin-top:8px">Prepared by Chef Irfan Malek</div></div>`;
@@ -2469,23 +2575,50 @@ function renderActions(){
 }
 
 /* ---------- admin ---------- */
+function setupLink(){
+  const u=API_URL, t=API_TOKEN;
+  if(!u) return null;
+  const raw=JSON.stringify({u,t});
+  let b;
+  try{ b=btoa(unescape(encodeURIComponent(raw))); }catch(e){ return null; }
+  b=b.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  return location.origin+location.pathname+"?setup="+b;
+}
+function renderSetupLink(){
+  const box=$("setuplink"); if(!box) return;
+  const l=setupLink();
+  if(!l){ box.innerHTML=`<div class="hint">This device is not connected to a sheet, so there is nothing to share yet.</div>`; return; }
+  box.innerHTML=`<textarea class="exp" style="height:80px" onclick="this.select()" readonly>${esc(l)}</textarea>
+    <div class="hint">Tapping it saves the connection on that phone, then clears it from the address bar.
+    The chef lands straight on the sign-in list and picks their own name.</div>`;
+}
+
 function renderAdmin(){
   $("adm-users").innerHTML=S.users.map(u=>{
-    const exec=isExec(u);
     return `<tr>
       <td><input type="text" value="${esc(u.name)}" onchange="setU('${u.id}','name',this.value)"></td>
       <td><select onchange="setU('${u.id}','role',this.value)">
-        ${["Head Chef","Sous Chef","Executive Chef"].map(r=>`<option ${u.role===r?"selected":""}>${r}</option>`).join("")}
+        ${["Head Chef","Sous Chef","Executive Chef","Management"].map(r=>`<option ${u.role===r?"selected":""}>${r}</option>`).join("")}
       </select></td>
-      <td>${exec?`<span style="color:var(--mute);font-size:12.5px">All kitchens</span>`
+      <td>${allOutlets(u)?`<span style="color:var(--mute);font-size:12.5px">All outlets</span>`
         :`<select onchange="setU('${u.id}','venue',this.value)">
           ${S.outlets.map(o=>`<option ${u.venue===o?"selected":""}>${o}</option>`).join("")}</select>`}</td>
+      <td>${seesAll(u)
+        ? `<select onchange="setU('${u.id}','signs',this.value)">
+             <option value="" ${!u.signs?"selected":""}>—</option>
+             ${SIGNERS.map(([k,l])=>`<option value="${k}" ${u.signs===k?"selected":""}>${l}</option>`).join("")}
+           </select>`
+        : `<span style="color:var(--mute);font-size:12.5px">—</span>`}</td>
       <td><input type="text" maxlength="4" value="${esc(u.pin)}" onchange="setU('${u.id}','pin',this.value)"></td>
       <td style="text-align:right">${S.user.id===u.id
         ?`<span style="color:var(--mute);font-size:12px">You</span>`
         :`<button class="btn ghost sm" onclick="delUser('${u.id}')">Remove</button>`}</td></tr>`;
   }).join("");
   $("nu-venue").innerHTML=S.outlets.map(o=>`<option>${o}</option>`).join("");
+  $("nu-signs").innerHTML=`<option value="">—</option>`+
+    SIGNERS.map(([k,l])=>`<option value="${k}">${l}</option>`).join("");
+  newUserRole();
+  renderSetupLink();
   $("adm-outlets").innerHTML=S.outlets.map(o=>{
     const n=S.users.filter(u=>u.venue===o).length;
     return `<span class="tag">${o}<span style="color:var(--mute);font-weight:400">${n} assigned</span>
@@ -2493,14 +2626,22 @@ function renderAdmin(){
 }
 function setU(id,f,v){
   const u=S.users.find(x=>x.id===id); u[f]=v;
-  if(f==="role"&&isExec(u)) u.venue="";
-  if(f==="role"&&!isExec(u)&&!u.venue) u.venue=S.outlets[0]||"";
+  if(f==="role"&&allOutlets(u)) u.venue="";
+  if(f==="role"&&!allOutlets(u)){ if(!u.venue) u.venue=S.outlets[0]||""; u.signs=""; }
   push({action:"users",users:S.users}); renderAdmin();
+}
+function newUserRole(){
+  const r=$("nu-role").value, all = r==="Executive Chef" || r==="Management";
+  $("nu-signwrap").style.display = all ? "block" : "none";
+  $("nu-venue").parentElement.style.display = all ? "none" : "block";
 }
 function addUser(){
   const name=$("nu-name").value.trim(); if(!name){$("nu-name").focus();return}
   const role=$("nu-role").value;
-  S.users.push({id:"u"+(S.uid++),name,role,venue:role==="Executive Chef"?"":$("nu-venue").value,
+  const all = role==="Executive Chef" || role==="Management";
+  S.users.push({id:"u"+(S.uid++),name,role,
+    venue: all ? "" : $("nu-venue").value,
+    signs: all ? $("nu-signs").value : "",
     pin:$("nu-pin").value||"1234"});
   $("nu-name").value="";$("nu-pin").value="1234";
   push({action:"users",users:S.users}); renderAdmin();
