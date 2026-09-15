@@ -786,9 +786,11 @@ table.adm input,table.adm select{padding:8px 10px;font-size:13.5px}
         The details are stored on this device only — they are never part of the published app.
       </div>
       <span class="sub">Apps Script Web app URL</span>
-      <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec">
+      <input type="url" id="cfg-url" inputmode="url" autocapitalize="none" autocorrect="off"
+             autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/.../exec">
       <span class="sub" style="margin-top:10px">Token</span>
-      <input type="text" id="cfg-token" placeholder="the value on line 14 of Code.gs">
+      <input type="text" id="cfg-token" autocapitalize="none" autocorrect="off"
+             autocomplete="off" spellcheck="false" placeholder="the value on line 14 of Code.gs">
       <button class="btn submit" style="margin-top:12px" onclick="saveCfg()">Connect</button>
       <div class="hint" id="cfg-hint">Both come from the Apps Script project behind your Google Sheet.</div>
     </div>
@@ -1218,8 +1220,9 @@ function consumeSetupLink(){
     let b=m[1].replace(/-/g,"+").replace(/_/g,"/");
     while(b.length%4) b+="=";
     const o=JSON.parse(decodeURIComponent(escape(atob(b))));
-    if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(o.u||"")) return null;
-    const cfg={API_URL:o.u, API_TOKEN:o.t||""};
+    const u=tidyUrl(o.u||"");
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/[^\/]+\/exec$/.test(u)) return null;
+    const cfg={API_URL:u, API_TOKEN:tidy(o.t||"")};
     try{ localStorage.setItem("umami_cfg",JSON.stringify(cfg)); }catch(e){}
     try{ history.replaceState({}, "", location.pathname); }catch(e){}
     return cfg;
@@ -1229,13 +1232,33 @@ const CFG       = consumeSetupLink() || loadCfg();
 const API_URL   = CFG.API_URL   || "";
 const API_TOKEN = CFG.API_TOKEN || "";   /* supplied per device, or by config.js */
 
+/* Phone keyboards capitalise, autocorrect and add stray spaces. Clean all of
+   that off before judging the value, or a correct entry gets rejected. */
+function tidy(v){
+  return String(v||"")
+    .replace(/[\u200B-\u200D\uFEFF\u00A0]/g,"")   /* invisible characters */
+    .replace(/\s+/g,"")                             /* any whitespace at all */
+    .trim();
+}
+function tidyUrl(v){
+  let u=tidy(v).replace(/[\u2018\u2019\u201C\u201D]/g,"");
+  u=u.replace(/^(https?):\/\//i, m=>m.toLowerCase());            /* Https:// -> https:// */
+  u=u.replace(/^http:\/\//i,"https://");
+  u=u.replace(/^(https:\/\/)(script\.google\.com)/i,(m,a,b)=>a+b.toLowerCase());
+  u=u.replace(/\/+$/,"");                                        /* trailing slash */
+  if(/\/exec$/i.test(u)) u=u.replace(/\/exec$/i,"/exec");
+  return u;
+}
 function saveCfg(){
-  const u=$("cfg-url").value.trim(), t=$("cfg-token").value.trim();
-  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){
-    $("cfg-hint").innerHTML="<b>That does not look like the Web app URL.</b> It starts https://script.google.com/macros/s/ and ends /exec";
+  const u=tidyUrl($("cfg-url").value), t=tidy($("cfg-token").value);
+  $("cfg-url").value=u; $("cfg-token").value=t;   /* show what will be used */
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/[^\/]+\/exec$/.test(u)){
+    $("cfg-hint").innerHTML="<b>That does not look like the Web app URL.</b> "+
+      "It must start <i>https://script.google.com/macros/s/</i> and end <i>/exec</i>."+
+      (u?"<br>Read as: "+esc(u):"");
     return;
   }
-  if(!t){ $("cfg-hint").innerHTML="<b>Enter the token</b> — the same value as line 14 of Code.gs."; return; }
+  if(!t){ $("cfg-hint").innerHTML="<b>Enter the token</b> — the same value as line 14 of Code.gs. Capital letters matter."; return; }
   try{ localStorage.setItem("umami_cfg",JSON.stringify({API_URL:u,API_TOKEN:t})); }
   catch(e){ $("cfg-hint").innerHTML="<b>This browser will not save settings.</b> Turn off private browsing and try again."; return; }
   location.reload();
@@ -1297,7 +1320,7 @@ async function api(payload){
   try{ j=await r.json(); }
   catch(e){ throw new Error("The URL did not return data. It usually means the deployment is private, or the URL is the /dev one instead of /exec."); }
   if(j.error) throw new Error(j.error==="Unauthorised"
-    ? "Unauthorised — the token in config.js does not match the one in Code.gs."
+    ? "Unauthorised — the token does not match Code.gs line 14. Capital letters matter: phone keyboards often capitalise the first letter."
     : j.error);
   return j;
 }

@@ -1,7 +1,7 @@
 /* Umami kitchen log — offline support.
    Network first, so a redeploy is picked up straight away; falls back to
    cache when there is no signal, which is the point in a basement kitchen. */
-const V = 'umami-kitchen-v2';
+const V = 'umami-kitchen-v3';
 const SHELL = ['./', './index.html', './manifest.json',
                './icon-192.png', './icon-512.png'];
 
