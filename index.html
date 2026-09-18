@@ -1,10 +1,10 @@
 <!DOCTYPE html>
+<!-- BUILD: 2026-09-18-a management-role mobile-pin no-placeholder-users -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Umami — Char &amp; Barten Kitchen Log</title>
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1C1B19">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,7 +19,10 @@ body{background:var(--paper);color:var(--ink);font-family:"Helvetica Neue",Arial
 
 /* ---------- chrome ---------- */
 .topbar{background:var(--ink);color:#fff;padding:0 24px;display:flex;align-items:center;gap:26px;
-  flex-wrap:wrap;position:sticky;top:0;z-index:50;min-height:58px}
+  flex-wrap:wrap;position:sticky;top:0;z-index:50;min-height:58px;width:100%;box-sizing:border-box}
+.nav{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{white-space:nowrap;flex:0 0 auto}
 .lockup{display:flex;flex-direction:column;justify-content:center;padding-right:6px}
 .brand{font-family:Georgia,serif;font-size:16px;letter-spacing:.30em;text-transform:uppercase;color:var(--brass);line-height:1.1}
 .parent{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#6f6a62;margin-top:3px;font-weight:600}
@@ -128,6 +131,9 @@ textarea{resize:none;height:62px;font-size:14px}
 .covernote{background:var(--paper);border-left:3px solid var(--brass);border-radius:0 7px 7px 0;padding:8px 11px;
   margin-top:8px;font-size:11px;color:var(--slate);line-height:1.5}
 .covernote b{color:var(--ink)}
+/* Masked without being a password field, so iOS AutoFill leaves it alone. */
+.pinbox{text-align:center;letter-spacing:.5em;font-size:19px;
+  -webkit-text-security:disc;text-security:disc}
 textarea.exp{width:100%;height:132px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;
   background:var(--paper);border:1.5px solid var(--line);cursor:pointer;white-space:pre;overflow:auto}
 textarea.exp:hover{border-color:var(--ember)}
@@ -662,7 +668,7 @@ function reportText(month,vs,R,combined,gates,allPass,qavg,qn){
 function addAction(){
   const g=id=>$(id).value.trim();
   if(!g("a-issue")){ $("a-issue").focus(); return; }
-  const o={id:S.aEdit||("a"+(S.uid++)), priority:$("a-pri").value, venue:$("a-venue").value,
+  const o={id:S.aEdit||newId("a"), priority:$("a-pri").value, venue:$("a-venue").value,
     cat:$("a-cat").value, issue:g("a-issue"), impact:g("a-impact"), action:g("a-action"),
     owner:g("a-owner"), due:g("a-due"), status:$("a-status").value};
   if(S.aEdit){ S.actions=S.actions.map(x=>x.id===S.aEdit?o:x); S.aEdit=null; $("a-btn").textContent="Add"; }
@@ -746,6 +752,22 @@ table.adm input,table.adm select{padding:8px 10px;font-size:13.5px}
   font-size:13.5px;color:var(--slate);line-height:1.55;margin-top:14px;display:none}
 .flash.show{display:block}
 @media(max-width:900px){.stage{gap:26px}.kval{flex-basis:98px}}
+/* Below tablet width the people table becomes stacked cards — a six-column
+   table cannot be used on a phone. */
+@media(max-width:700px){
+  table.adm, table.adm tbody, table.adm tr, table.adm td{display:block;width:100%}
+  table.adm thead{display:none}
+  table.adm tr{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:#fff}
+  table.adm td{border:0;padding:6px 0}
+  table.adm td:before{content:attr(data-l);display:block;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--mute);font-weight:700;margin-bottom:4px}
+  table.adm input,table.adm select{width:100%}
+  .addrow>div{flex:1 1 100%}
+  .addrow button{width:100%}
+  table.ap{display:block;overflow-x:auto;white-space:nowrap}
+  .stage{flex-direction:column}
+  .phone{max-width:100%;flex:1 1 auto}
+}
 @media(max-width:560px){
   .wrap{padding:18px 12px 50px}
   .ph-body{padding:18px 16px 22px}
@@ -794,11 +816,23 @@ table.adm input,table.adm select{padding:8px 10px;font-size:13.5px}
       <button class="btn submit" style="margin-top:12px" onclick="saveCfg()">Connect</button>
       <div class="hint" id="cfg-hint">Both come from the Apps Script project behind your Google Sheet.</div>
     </div>
+    <div id="nosheet" style="display:none">
+      <div class="covernote" style="border-left-color:var(--red);margin:0 0 14px">
+        <b>Cannot reach the kitchen sheet.</b>
+        <div id="nosheet-why" style="margin-top:6px"></div>
+      </div>
+      <button class="btn submit" onclick="location.reload()">Try again</button>
+      <button class="btn ghost submit" style="margin-top:8px" onclick="forgetCfg()">Reconnect this device</button>
+      <div class="hint">Nobody can sign in until the sheet answers. That is deliberate &mdash; a log filed
+      against an unreachable sheet would look saved and be lost.</div>
+    </div>
     <div id="users"></div>
     <div id="pinbox" style="display:none;margin-top:20px">
       <span class="sub">PIN</span>
-      <input type="password" inputmode="numeric" maxlength="4" id="i-pin" placeholder="••••"
-             style="text-align:center;letter-spacing:.5em;font-size:19px" onkeydown="if(event.key==='Enter')doSignIn()">
+      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="i-pin"
+             autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+             name="kitchen-pin-nofill" placeholder="••••" class="pinbox"
+             onkeydown="if(event.key==='Enter')doSignIn()">
       <button class="btn submit" style="margin-top:11px" onclick="doSignIn()">Sign in</button>
       <div class="hint" id="pinhint">Default PIN is 1234 for everyone. Change it in Chefs &amp; outlets.</div>
     </div>
@@ -1368,15 +1402,25 @@ async function boot(){
   NET.loading=true; syncBadge();
   try{
     const j=await api({action:"bootstrap"});
-    if(j.users&&j.users.length)   S.users=j.users;
+    if(j.users&&j.users.length){
+      S.users=j.users;
+      /* a sheet written by the old id scheme may already hold duplicates */
+      const seen={}; let fixed=false;
+      S.users.forEach(u=>{
+        if(!u.id || seen[u.id]){ u.id=newId("u"); fixed=true; }
+        seen[u.id]=true;
+      });
+      if(fixed) push({action:"users",users:S.users});
+    }
     if(j.outlets&&j.outlets.length) S.outlets=j.outlets;
     if(j.reports) S.reports=j.reports.sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
+    S.sheetOk=true;
     if(j.months) S.monthly=j.months;
     if(j.signoff) S.signoff=j.signoff;
     if(j.actions) S.actions=j.actions;
     if(j.rates) Object.keys(j.rates).forEach(k=>{const e=$("r-"+k); if(e&&j.rates[k]) e.value=j.rates[k]});
     NET.online=true;
-  }catch(e){ NET.online=false; NET.err=e.message; }
+  }catch(e){ NET.online=false; NET.err=e.message; S.sheetOk=false; }
   NET.loading=false;
   renderUsers(); syncBadge();
 }
@@ -1393,13 +1437,19 @@ let S={
     {id:"u2",name:"Chef Mustafa Said", role:"Head Chef",      venue:"Barten", pin:"1234"}
   ],
   outlets:["Char","Barten"],
-  user:null, pick:null, view:"log", monthly:{}, mVenue:null,
+  user:null, pick:null, view:"log", monthly:{}, mVenue:null, sheetOk:false,
   signoff:{}, actions:[], aEdit:null,
   venue:"Char",
   reports:[], editingId:null,
   lines:[], editIdx:null, fbs:[], fbIdx:null, isss:[], issIdx:null,
   temps:"", recipe:"", checked:{}, openId:null, uid:4
 };
+
+/* Ids must never collide with rows already in the sheet — a counter starting
+   from a fixed number did exactly that, and removing one user removed two. */
+function newId(prefix){
+  return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+}
 
 const isExec  = u => u && u.role==="Executive Chef";
 const isMgmt  = u => u && u.role==="Management";
@@ -1472,6 +1522,15 @@ function ownerName(role,v){
 
 /* ---------- sign in ---------- */
 function renderUsers(){
+  /* Live but the sheet has not answered: show nothing to sign in with. */
+  if(LIVE() && !S.sheetOk){
+    $("users").innerHTML="";
+    $("pinbox").style.display="none";
+    $("nosheet").style.display="block";
+    $("nosheet-why").innerHTML = esc(NET.err || "Still connecting…");
+    return;
+  }
+  $("nosheet").style.display="none";
   const ex=S.users.filter(isExec), mg=S.users.filter(isMgmt),
         rest=S.users.filter(u=>!isExec(u)&&!isMgmt(u));
   const card=u=>`<button class="ucard ${S.pick===u.id?'on':''}" onclick="pickUser('${u.id}')">
@@ -1487,7 +1546,14 @@ function pickUser(id){S.pick=id;renderUsers();$("pinbox").style.display="block";
 function doSignIn(){
   const u=S.users.find(x=>x.id===S.pick);
   if(!u) return;
-  if($("i-pin").value!==u.pin){$("pinhint").innerHTML="<b>Wrong PIN.</b> Default is 1234 unless it was changed.";return}
+  const typed=tidy($("i-pin").value), want=tidy(u.pin);
+  if(typed!==want){
+    $("pinhint").innerHTML="<b>Wrong PIN.</b> Default is 1234 unless it was changed."+
+      (typed.length&&typed.length!==want.length
+        ? ` You entered ${typed.length} digit${typed.length>1?"s":""}; the PIN has ${want.length}.`
+        : "");
+    return;
+  }
   S.user=u; S.venue=isExec(u)? S.outlets[0] : u.venue;
   $("topbar").style.display="flex";
   renderNav();
@@ -1809,7 +1875,7 @@ function saveLog(){
     S.openId=dup.id; setView("reports"); return; }
   if(!S.checked[S.venue]) S.checked[S.venue]=[];
   if(!S.checked[S.venue].includes(d.dish)) S.checked[S.venue].push(d.dish);
-  const r={id:"r"+(S.uid++),dateKey:dk,dateLabel:fmtDate(now),venue:S.venue,
+  const r={id:newId("r"),dateKey:dk,dateLabel:fmtDate(now),venue:S.venue,
     who:S.user.name, time:now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),
     status:"draft", d};
   S.reports.unshift(r); S.openId=r.id;
@@ -2540,7 +2606,7 @@ function reportText(month,vs,R,combined,gates,allPass,qavg,qn){
 function addAction(){
   const g=id=>$(id).value.trim();
   if(!g("a-issue")){ $("a-issue").focus(); return; }
-  const o={id:S.aEdit||("a"+(S.uid++)), priority:$("a-pri").value, venue:$("a-venue").value,
+  const o={id:S.aEdit||newId("a"), priority:$("a-pri").value, venue:$("a-venue").value,
     cat:$("a-cat").value, issue:g("a-issue"), impact:g("a-impact"), action:g("a-action"),
     owner:g("a-owner"), due:g("a-due"), status:$("a-status").value};
   if(S.aEdit){ S.actions=S.actions.map(x=>x.id===S.aEdit?o:x); S.aEdit=null; $("a-btn").textContent="Add"; }
@@ -2619,27 +2685,31 @@ function renderSetupLink(){
 function renderAdmin(){
   $("adm-users").innerHTML=S.users.map(u=>{
     return `<tr>
-      <td><input type="text" value="${esc(u.name)}" onchange="setU('${u.id}','name',this.value)"></td>
-      <td><select onchange="setU('${u.id}','role',this.value)">
+      <td data-l="Name"><input type="text" value="${esc(u.name)}" onchange="setU('${u.id}','name',this.value)"></td>
+      <td data-l="Role"><select onchange="setU('${u.id}','role',this.value)">
         ${["Head Chef","Sous Chef","Executive Chef","Management"].map(r=>`<option ${u.role===r?"selected":""}>${r}</option>`).join("")}
       </select></td>
-      <td>${allOutlets(u)?`<span style="color:var(--mute);font-size:12.5px">All outlets</span>`
+      <td data-l="Outlet">${allOutlets(u)?`<span style="color:var(--mute);font-size:12.5px">All outlets</span>`
         :`<select onchange="setU('${u.id}','venue',this.value)">
           ${S.outlets.map(o=>`<option ${u.venue===o?"selected":""}>${o}</option>`).join("")}</select>`}</td>
-      <td>${seesAll(u)
+      <td data-l="Signs off">${seesAll(u)
         ? `<select onchange="setU('${u.id}','signs',this.value)">
              <option value="" ${!u.signs?"selected":""}>—</option>
              ${SIGNERS.map(([k,l])=>`<option value="${k}" ${u.signs===k?"selected":""}>${l}</option>`).join("")}
            </select>`
         : `<span style="color:var(--mute);font-size:12.5px">—</span>`}</td>
-      <td><input type="text" maxlength="4" value="${esc(u.pin)}" onchange="setU('${u.id}','pin',this.value)"></td>
-      <td style="text-align:right">${S.user.id===u.id
+      <td data-l="PIN"><input type="text" maxlength="4" inputmode="numeric" autocomplete="off"
+            value="${esc(u.pin)}" onchange="setU('${u.id}','pin',this.value)"></td>
+      <td data-l="" style="text-align:right">${S.user.id===u.id
         ?`<span style="color:var(--mute);font-size:12px">You</span>`
         :`<button class="btn ghost sm" onclick="delUser('${u.id}')">Remove</button>`}</td></tr>`;
   }).join("");
   $("nu-venue").innerHTML=S.outlets.map(o=>`<option>${o}</option>`).join("");
   $("nu-signs").innerHTML=`<option value="">—</option>`+
-    SIGNERS.map(([k,l])=>`<option value="${k}">${l}</option>`).join("");
+    SIGNERS.map(([k,l])=>{
+      const h=S.users.find(x=>x.signs===k);
+      return `<option value="${k}">${l}${h?" — taken by "+h.name:""}</option>`;
+    }).join("");
   newUserRole();
   renderSetupLink();
   $("adm-outlets").innerHTML=S.outlets.map(o=>{
@@ -2648,10 +2718,37 @@ function renderAdmin(){
       <button title="Remove" onclick="delOutlet('${o}')">&#10005;</button></span>`}).join("");
 }
 function setU(id,f,v){
-  const u=S.users.find(x=>x.id===id); u[f]=v;
+  const u=S.users.find(x=>x.id===id); if(!u) return;
+
+  /* Guard against locking yourself out of this very screen. */
+  if(f==="role" && v!=="Executive Chef"){
+    const execs=S.users.filter(isExec).length;
+    if(isExec(u) && execs<=1){
+      alert("This is the only Executive Chef account.\n\nChanging it would leave nobody able to close a month, "+
+            "release a report or manage this list — and you could not change it back from inside the app.\n\n"+
+            "Add a second Executive Chef first, then change this one.");
+      renderAdmin(); return;
+    }
+    if(S.user && S.user.id===id){
+      if(!confirm("You are changing your own role away from Executive Chef.\n\n"+
+                  "You will lose Monthly close, Scorecard, Actions and this screen the next time you sign in.\n\nContinue?")){
+        renderAdmin(); return;
+      }
+    }
+  }
+
+  u[f]=v;
   if(f==="role"&&allOutlets(u)) u.venue="";
   if(f==="role"&&!allOutlets(u)){ if(!u.venue) u.venue=S.outlets[0]||""; u.signs=""; }
-  push({action:"users",users:S.users}); renderAdmin();
+
+  /* two people must never hold the same sign-off slot */
+  if(f==="signs" && v){
+    S.users.forEach(x=>{ if(x.id!==id && x.signs===v) x.signs=""; });
+  }
+
+  push({action:"users",users:S.users});
+  if(f==="role" && S.user && S.user.id===id) renderNav();   /* tabs follow immediately */
+  renderAdmin();
 }
 function newUserRole(){
   const r=$("nu-role").value, all = r==="Executive Chef" || r==="Management";
@@ -2662,7 +2759,7 @@ function addUser(){
   const name=$("nu-name").value.trim(); if(!name){$("nu-name").focus();return}
   const role=$("nu-role").value;
   const all = role==="Executive Chef" || role==="Management";
-  S.users.push({id:"u"+(S.uid++),name,role,
+  S.users.push({id:newId("u"),name,role,
     venue: all ? "" : $("nu-venue").value,
     signs: all ? $("nu-signs").value : "",
     pin:$("nu-pin").value||"1234"});
@@ -2671,7 +2768,13 @@ function addUser(){
 }
 function delUser(id){
   if(S.users.length<=1) return;
-  S.users=S.users.filter(u=>u.id!==id);
+  const u=S.users.find(x=>x.id===id); if(!u) return;
+  if(isExec(u) && S.users.filter(isExec).length<=1){
+    alert("This is the only Executive Chef account and cannot be removed.\n\nAdd another Executive Chef first.");
+    return;
+  }
+  if(!confirm("Remove "+u.name+"?\n\nReports they have already filed stay in the sheet.")) return;
+  S.users=S.users.filter(x=>x.id!==id);
   push({action:"users",users:S.users}); renderAdmin();
 }
 function addOutlet(){
@@ -2692,11 +2795,6 @@ function delOutlet(o){
 chips("c-temps","temps",()=>{$("tempbox").style.display=S.temps==="fail"?"block":"none"});
 chips("c-recipe","recipe",()=>{$("dev").style.display=S.recipe==="fail"?"block":"none"});
 boot();
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-}
 </script>
 </body>
 </html>
